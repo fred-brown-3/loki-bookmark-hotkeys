@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Loki Palette</title>
+  <link rel="stylesheet" href="palette.css">
+</head>
+<body>
+  <div id="loki-backdrop" role="dialog" aria-modal="true" aria-label="Loki Bookmark Palette">
+    <div id="loki-palette">
+
+      <!-- Header / Search -->
+      <div id="loki-header">
+        <img id="loki-logo" src="../icons/loki-48.png" alt="Loki" />
+        <input
+          id="loki-search"
+          type="text"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="Press a hotkey or type to search bookmarks…"
+          aria-label="Search bookmarks"
+          aria-autocomplete="list"
+          aria-controls="loki-results"
+          autofocus
+        />
+        <span id="loki-mode-badge">Hotkeys</span>
+      </div>
+
+      <!-- Breadcrumb (folder drill-in) -->
+      <div id="loki-breadcrumb" role="navigation" aria-label="Folder navigation"></div>
+
+      <!-- Results -->
+      <div id="loki-results" role="listbox" aria-label="Bookmark results"></div>
+
+      <!-- Empty State -->
+      <div id="loki-empty" role="status">
+        <div id="loki-empty-dog">🐾</div>
+        <div class="loki-empty-title" id="loki-empty-title">No hotkeys assigned yet</div>
+        <div class="loki-empty-sub" id="loki-empty-sub">Open Settings to assign shortcuts to your bookmarks</div>
+        <button class="loki-empty-cta" id="loki-open-settings">Open Settings</button>
+      </div>
+
+      <!-- Inline Edit Panel -->
+      <div id="loki-edit-panel" role="form" aria-label="Edit bookmark">
+        <div class="loki-edit-title" id="loki-edit-panel-title">Edit Bookmark</div>
+        <div class="loki-edit-row">
+          <span class="loki-edit-label">Title</span>
+          <input class="loki-edit-input" id="loki-edit-title" type="text" placeholder="Bookmark title" />
+        </div>
+        <div class="loki-edit-row">
+          <span class="loki-edit-label">URL</span>
+          <input class="loki-edit-input" id="loki-edit-url" type="url" placeholder="https://…" />
+        </div>
+        <div class="loki-edit-row">
+          <span class="loki-edit-label">Hotkey</span>
+          <input class="loki-edit-input key-capture" id="loki-edit-key" type="text"
+                 readonly placeholder="Click to capture key…" aria-label="Press keys to capture shortcut" />
+        </div>
+        <div id="loki-conflict-warning" class="loki-conflict-warning" role="alert"></div>
+        <div class="loki-edit-row">
+          <span class="loki-edit-label">Open in</span>
+          <select class="loki-edit-select" id="loki-edit-open-in" aria-label="Open bookmark in">
+            <option value="new_tab">New Tab</option>
+            <option value="current_tab">Current Tab</option>
+            <option value="new_window">New Window</option>
+          </select>
+        </div>
+        <div class="loki-edit-row" id="loki-edit-folder-row" style="display:none">
+          <span class="loki-edit-label">Folders</span>
+          <select class="loki-edit-select" id="loki-edit-folder-behavior" aria-label="Folder open behavior">
+            <option value="drill_in">Drill into folder</option>
+            <option value="flat_list">Show as flat list</option>
+            <option value="open_all">Open all as tabs</option>
+          </select>
+        </div>
+        <div class="loki-edit-actions">
+          <button class="loki-btn" id="loki-edit-chrome-btn" title="Open in Chrome Bookmark Manager">
+            Open in Chrome ↗
+          </button>
+          <button class="loki-btn" id="loki-edit-cancel">Cancel</button>
+          <button class="loki-btn primary" id="loki-edit-save">Save</button>
+        </div>
+      </div>
+
+      <!-- Footer hints -->
+      <div id="loki-footer">
+        <span class="loki-hint">
+          <kbd class="loki-hint-key">↑↓</kbd> navigate
+        </span>
+        <span class="loki-hint">
+          <kbd class="loki-hint-key">↵</kbd> open
+        </span>
+        <span class="loki-hint">
+          <kbd class="loki-hint-key">E</kbd> edit
+        </span>
+        <span class="loki-hint">
+          <kbd class="loki-hint-key">Esc</kbd> close
+        </span>
+      </div>
+    </div>
+  </div>
+  <script src="palette.js"></script>
+</body>
+</html>

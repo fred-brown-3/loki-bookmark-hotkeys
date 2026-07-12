@@ -1,0 +1,574 @@
+/* palette/palette.css — Loki Command Palette Styles
+ * Scoped inside Shadow DOM — no risk of host page conflicts.
+ * Westie-inspired: warm creams, linen, amber accents.
+ * Auto light/dark via prefers-color-scheme.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────── */
+:root {
+  /* Light mode */
+  --bg: #FDFAF5;
+  --surface: #F5EFE0;
+  --surface-hover: #EDE3CF;
+  --border: #DDD3BC;
+  --border-focus: #C4873B;
+  --accent: #C4873B;
+  --accent-hover: #A96F28;
+  --accent-text: #FFFFFF;
+  --text-primary: #2C2416;
+  --text-secondary: #7A6D5A;
+  --text-muted: #A89880;
+  --badge-bg: #EDE3CF;
+  --badge-text: #5A4020;
+  --badge-border: #D4B896;
+  --input-bg: #FFFFFF;
+  --shadow: 0 20px 60px rgba(44, 36, 22, 0.18), 0 4px 16px rgba(44, 36, 22, 0.10);
+  --backdrop: rgba(44, 36, 22, 0.45);
+  --success: #5A8A5A;
+  --danger: #B85050;
+  --folder-color: #8A6A3A;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --radius-xs: 5px;
+  --transition: 0.15s ease;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1C1A17;
+    --surface: #2A2720;
+    --surface-hover: #332F28;
+    --border: #3D3A34;
+    --border-focus: #D4975A;
+    --accent: #D4975A;
+    --accent-hover: #E8AA70;
+    --accent-text: #1C1A17;
+    --text-primary: #F0EAD8;
+    --text-secondary: #9A907E;
+    --text-muted: #6A6050;
+    --badge-bg: #332F28;
+    --badge-text: #D4975A;
+    --badge-border: #4A4538;
+    --input-bg: #232018;
+    --shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.35);
+    --backdrop: rgba(0, 0, 0, 0.65);
+  }
+}
+body {
+  width: 600px;
+  height: 400px;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Backdrop ───────────────────────────────────────────────────────────── */
+#loki-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 2147483646;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  background: var(--bg);
+}
+
+/* ─── Palette Container ──────────────────────────────────────────────────── */
+#loki-palette {
+  font-family: var(--font);
+  background: var(--bg);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+#loki-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+#loki-logo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+
+#loki-search {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-primary);
+  caret-color: var(--accent);
+  min-width: 0;
+}
+
+#loki-search::placeholder {
+  color: var(--text-muted);
+}
+
+#loki-mode-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid var(--badge-border);
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+#loki-mode-badge.search-mode {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+/* ─── Breadcrumb ─────────────────────────────────────────────────────────── */
+#loki-breadcrumb {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+#loki-breadcrumb.visible {
+  display: flex;
+}
+
+.loki-breadcrumb-sep {
+  color: var(--text-muted);
+}
+
+.loki-breadcrumb-item {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.loki-breadcrumb-item:hover {
+  text-decoration: underline;
+}
+
+/* ─── Results List ───────────────────────────────────────────────────────── */
+#loki-results {
+  overflow-y: auto;
+  flex: 1;
+  padding: 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+#loki-results::-webkit-scrollbar {
+  width: 5px;
+}
+
+#loki-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#loki-results::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* ─── Section Header ─────────────────────────────────────────────────────── */
+.loki-section-header {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 10px 16px 4px;
+}
+
+/* ─── Result Item ─────────────────────────────────────────────────────────── */
+.loki-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background var(--transition);
+  position: relative;
+  min-height: 44px;
+}
+
+.loki-item:hover,
+.loki-item.active {
+  background: var(--surface-hover);
+}
+
+.loki-item.active {
+  outline: none;
+}
+
+/* Favicon */
+.loki-favicon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  object-fit: contain;
+}
+
+.loki-favicon-fallback {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+/* Text block */
+.loki-item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.loki-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loki-item-url {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.loki-item-url .loki-url-highlight {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Actions (shown on hover/active) */
+.loki-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.loki-item:hover .loki-item-actions,
+.loki-item.active .loki-item-actions {
+  opacity: 1;
+}
+
+.loki-action-btn {
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.loki-action-btn:hover {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+.loki-action-btn.danger:hover {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+/* Key badge */
+.loki-key-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.loki-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--badge-text);
+  letter-spacing: -0.01em;
+}
+
+/* Folder chevron */
+.loki-folder-arrow {
+  color: var(--text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* ─── Inline Edit Form ───────────────────────────────────────────────────── */
+#loki-edit-panel {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 14px 16px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#loki-edit-panel.visible {
+  display: flex;
+}
+
+.loki-edit-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.loki-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.loki-edit-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.loki-edit-input {
+  flex: 1;
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 6px 10px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.loki-edit-input:focus {
+  border-color: var(--border-focus);
+}
+
+.loki-edit-input.key-capture {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.loki-edit-select {
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 6px 10px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+}
+
+.loki-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.loki-btn {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.loki-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.loki-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.loki-btn.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* ─── Empty & Loading States ─────────────────────────────────────────────── */
+#loki-empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+#loki-empty.visible {
+  display: flex;
+}
+
+#loki-empty-dog {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.loki-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.loki-empty-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.loki-empty-cta {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.loki-empty-cta:hover {
+  background: var(--accent-hover);
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+#loki-footer {
+  border-top: 1px solid var(--border);
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface);
+}
+
+.loki-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.loki-hint-key {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--badge-text);
+}
+
+/* ─── Conflict Warning ───────────────────────────────────────────────────── */
+.loki-conflict-warning {
+  font-size: 11.5px;
+  color: var(--danger);
+  font-weight: 500;
+  margin-top: -4px;
+}
+
+/* ─── Search Highlight ───────────────────────────────────────────────────── */
+mark.loki-mark {
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

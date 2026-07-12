@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loki Settings</title>
+  <meta name="description" content="Configure Loki bookmark hotkeys — assign shortcuts, manage domains, and customize your palette." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #FDFAF5;
+      --surface: #F5EFE0;
+      --surface-hover: #EDE3CF;
+      --border: #DDD3BC;
+      --border-focus: #C4873B;
+      --accent: #C4873B;
+      --accent-hover: #A96F28;
+      --accent-text: #fff;
+      --text-primary: #2C2416;
+      --text-secondary: #7A6D5A;
+      --text-muted: #A89880;
+      --badge-bg: #EDE3CF;
+      --badge-text: #5A4020;
+      --badge-border: #D4B896;
+      --input-bg: #fff;
+      --danger: #B85050;
+      --danger-hover: #9A3838;
+      --success: #5A8A5A;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-xs: 5px;
+      --sidebar-w: 220px;
+      --font: 'Inter', -apple-system, sans-serif;
+      --transition: 0.15s ease;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1C1A17;
+        --surface: #2A2720;
+        --surface-hover: #332F28;
+        --border: #3D3A34;
+        --accent: #D4975A;
+        --accent-hover: #E8AA70;
+        --accent-text: #1C1A17;
+        --text-primary: #F0EAD8;
+        --text-secondary: #9A907E;
+        --text-muted: #6A6050;
+        --badge-bg: #332F28;
+        --badge-text: #D4975A;
+        --badge-border: #4A4538;
+        --input-bg: #232018;
+        --danger: #D47070;
+        --danger-hover: #E88080;
+      }
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text-primary);
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+    }
+
+    .sidebar-name {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .sidebar-tagline {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    nav {
+      padding: 10px 8px;
+      flex: 1;
+    }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 12px 10px 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all var(--transition);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover { background: var(--surface-hover); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+    .nav-item.active .nav-icon { color: var(--accent-text); }
+    .nav-icon { font-size: 16px; flex-shrink: 0; }
+
+    /* ── Main Content ── */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 40px;
+      min-width: 0;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .section-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+    }
+
+    /* ── Hotkeys Table ── */
+    .hotkey-table { width: 100%; border-collapse: collapse; }
+
+    .hotkey-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hotkey-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition);
+    }
+
+    .hotkey-row:last-child { border-bottom: none; }
+    .hotkey-row:hover { background: var(--surface-hover); }
+
+    .hotkey-favicon {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .hotkey-title {
+      flex: 1;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hotkey-url {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    .hotkey-open-in {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Key badge */
+    .key-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .key-cap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 5px;
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      border-bottom-width: 2px;
+      border-radius: var(--radius-xs);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--badge-text);
+    }
+
+    .row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    /* ── Buttons ── */
+    .btn {
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn:hover { background: var(--surface-hover); color: var(--text-primary); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn.danger { color: var(--danger); }
+    .btn.danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+    .btn.sm { font-size: 12px; padding: 4px 10px; }
+
+    /* ── Form Controls ── */
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      width: 90px;
+      flex-shrink: 0;
+    }
+
+    .form-input {
+      flex: 1;
+      font-family: var(--font);
+      font-size: 13.5px;
+      padding: 8px 12px;
+      background: var(--input-bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .form-input:focus { border-color: var(--border-focus); }
+
+    .form-select {
+      font-family: var(--font);
+      font-size: 13.5px;
+      padding: 8px 12px;
+      background: var(--input-bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      cursor: pointer;
+      outline: none;
+    }
+
+    .key-capture-input {
+      font-weight: 700;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .conflict-msg { font-size: 12px; color: var(--danger); margin-top: -8px; margin-bottom: 8px; }
+
+    /* ── Storage meter ── */
+    .storage-meter {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .storage-meter-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .storage-meter-fill.warn { background: #C4873B; }
+    .storage-meter-fill.danger { background: var(--danger); }
+
+    /* ── Domain list ── */
+    .domain-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .domain-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .domain-name { flex: 1; font-size: 13px; color: var(--text-primary); font-weight: 500; }
+
+    /* ── Toggle ── */
+    .toggle { position: relative; width: 40px; height: 22px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 22px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* ── About section ── */
+    .about-hero {
+      text-align: center;
+      padding: 30px 20px 24px;
+    }
+
+    .about-dog { font-size: 64px; line-height: 1; margin-bottom: 12px; }
+    .about-logo-img { width: 80px; height: 80px; border-radius: 20px; margin-bottom: 12px; }
+    .about-version { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── Empty state (hotkeys list) ── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-state-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .empty-state-sub { font-size: 13px; margin-bottom: 16px; }
+
+    /* ── Add Hotkey form collapsible ── */
+    #add-form-wrapper {
+      margin-top: 16px;
+      padding: 18px;
+      background: var(--surface);
+      border: 1.5px solid var(--border-focus);
+      border-radius: var(--radius);
+      display: none;
+    }
+
+    #add-form-wrapper.open { display: block; }
+
+    .bookmark-picker-results {
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .bookmark-pick-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background var(--transition);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .bookmark-pick-item:last-child { border-bottom: none; }
+    .bookmark-pick-item:hover { background: var(--surface-hover); }
+    .bookmark-pick-item.selected { background: var(--accent); color: var(--accent-text); }
+
+    .bpi-title { flex: 1; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bpi-url { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    .bookmark-pick-item.selected .bpi-url { color: rgba(255,255,255,0.75); }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .main { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-row">
+          <img class="sidebar-logo" src="../icons/loki-48.png" alt="Loki" />
+          <span class="sidebar-name">Loki</span>
+        </div>
+        <div class="sidebar-tagline">Bookmark Hotkeys</div>
+      </div>
+      <nav>
+        <div class="nav-section-label">Settings</div>
+        <button class="nav-item active" data-section="hotkeys" id="nav-hotkeys">
+          <span class="nav-icon">⌨️</span> Hotkeys
+        </button>
+        <button class="nav-item" data-section="leader" id="nav-leader">
+          <span class="nav-icon">🎯</span> Leader Key
+        </button>
+        <button class="nav-item" data-section="domains" id="nav-domains">
+          <span class="nav-icon">🌐</span> Domain Blocklist
+        </button>
+        <div class="nav-section-label">System</div>
+        <button class="nav-item" data-section="about" id="nav-about">
+          <span class="nav-icon">🐾</span> About
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main" id="main-content">
+
+      <!-- ── Section: Hotkeys ── -->
+      <section class="section active" id="section-hotkeys">
+        <h1>Hotkey Assignments</h1>
+        <p class="section-desc">
+          Assign keyboard shortcuts to your bookmarks. Press your leader key combo to launch the palette, then press the assigned key to navigate instantly.
+        </p>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <span id="hotkey-count-label" style="font-size:13px; color:var(--text-secondary);">Loading…</span>
+          <button class="btn primary" id="add-hotkey-btn">+ Add Hotkey</button>
+        </div>
+
+        <!-- Add form -->
+        <div id="add-form-wrapper">
+          <div class="card-title" style="margin-bottom:14px;">Add New Hotkey</div>
+
+          <!-- Bookmark search -->
+          <div class="form-row">
+            <span class="form-label">Bookmark</span>
+            <input class="form-input" id="bm-search" type="text" placeholder="Search your bookmarks…" autocomplete="off" />
+          </div>
+          <div class="bookmark-picker-results" id="bm-results" style="display:none"></div>
+          <div id="bm-selected-label" style="font-size:12px; color:var(--text-secondary); margin-bottom:10px; padding-left:102px; display:none;">
+            ✓ <span id="bm-selected-title"></span>
+          </div>
+
+          <!-- Hotkey capture -->
+          <div class="form-row">
+            <span class="form-label">Hotkey</span>
+            <input class="form-input key-capture-input" id="add-key-input" type="text" readonly placeholder="Click to capture key…" />
+          </div>
+          <div id="add-conflict-msg" class="conflict-msg" style="display:none"></div>
+
+          <!-- Open in -->
+          <div class="form-row">
+            <span class="form-label">Open in</span>
+            <select class="form-select" id="add-open-in">
+              <option value="new_tab">New Tab</option>
+              <option value="current_tab">Current Tab</option>
+              <option value="new_window">New Window</option>
+            </select>
+          </div>
+
+          <!-- Folder behavior (shown for folders) -->
+          <div class="form-row" id="add-folder-row" style="display:none">
+            <span class="form-label">Folder</span>
+            <select class="form-select" id="add-folder-behavior">
+              <option value="drill_in">Drill into folder</option>
+              <option value="flat_list">Show as flat list</option>
+              <option value="open_all">Open all as tabs</option>
+            </select>
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+            <button class="btn" id="add-cancel-btn">Cancel</button>
+            <button class="btn primary" id="add-save-btn">Save Hotkey</button>
+          </div>
+        </div>
+
+        <!-- Hotkey list -->
+        <div class="card" id="hotkeys-card">
+          <div id="hotkeys-list"></div>
+        </div>
+
+        <!-- Storage meter -->
+        <div style="margin-top:8px;">
+          <div style="display:flex; justify-content:space-between; font-size:11.5px; color:var(--text-muted); margin-bottom:4px;">
+            <span>Storage usage</span>
+            <span id="storage-label">—</span>
+          </div>
+          <div class="storage-meter">
+            <div class="storage-meter-fill" id="storage-fill" style="width:0%"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section: Leader Key ── -->
+      <section class="section" id="section-leader">
+        <h1>Leader Key</h1>
+        <p class="section-desc">
+          The leader key is the shortcut that opens the Loki palette. Default: <strong>⌘⇧L</strong> on Mac / <strong>Win+Shift+L</strong> on Windows.
+        </p>
+
+        <div class="card">
+          <div class="form-row">
+            <span class="form-label">Leader key</span>
+            <input class="form-input key-capture-input" id="leader-key-input" type="text" readonly placeholder="Click to set…" />
+          </div>
+          <div id="leader-conflict-msg" class="conflict-msg" style="display:none"></div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
+            <button class="btn" id="leader-reset-btn">Reset to Default</button>
+            <button class="btn primary" id="leader-save-btn">Save</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section: Domain Blocklist ── -->
+      <section class="section" id="section-domains">
+        <h1>Domain Blocklist</h1>
+        <p class="section-desc">
+          Loki is silenced on these domains — useful for apps with rich keyboard shortcuts like Notion or Google Docs.
+        </p>
+
+        <div class="card">
+          <div class="form-row">
+            <input class="form-input" id="domain-input" type="text" placeholder="e.g. notion.so or docs.google.com" style="flex:1" />
+            <button class="btn primary" id="add-domain-btn">Add</button>
+          </div>
+          <div class="domain-list" id="domain-list"></div>
+          <div id="domain-empty" style="font-size:13px; color:var(--text-muted); padding:10px 0; display:none">
+            No domains blocked. Loki is active everywhere.
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Section: About ── -->
+      <section class="section" id="section-about">
+        <h1>About Loki</h1>
+        <div class="card">
+          <div class="about-hero">
+            <img class="about-logo-img" src="../icons/loki-128.png" alt="Loki mascot" />
+            <div style="font-size:22px; font-weight:800; letter-spacing:-0.03em;">Loki</div>
+            <div style="font-size:13px; color:var(--text-secondary); margin-top:3px;">Bookmark Hotkeys</div>
+            <div class="about-version" id="about-version">Version 1.0.0</div>
+          </div>
+          <div style="font-size:13.5px; color:var(--text-secondary); line-height:1.7; text-align:center; padding:0 20px 10px;">
+            Loki gives you a Raycast-style command palette to navigate your bookmarks at the speed of thought. Named after our fluffy Westie co-founder. 🐾
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
