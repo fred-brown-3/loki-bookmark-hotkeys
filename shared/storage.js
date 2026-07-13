@@ -7,6 +7,7 @@
 const STORAGE_KEYS = {
   HOTKEYS: 'hotkeys',
   SETTINGS: 'settings',
+  TRACKED_TABS: 'lokiTrackedTabs', // chrome.storage.session — maps bookmarkId → tabId
 };
 
 const DEFAULT_SETTINGS = {
@@ -93,6 +94,24 @@ async function getStorageUsage() {
       resolve({ bytes, percent: Math.round((bytes / 102400) * 100) });
     });
   });
+}
+
+/**
+ * Returns the tracked-tabs map from chrome.storage.session.
+ * Keys are bookmarkBinding IDs, values are tabIds.
+ * @returns {Promise<Record<string, number>>}
+ */
+async function getTrackedTabs() {
+  const result = await chrome.storage.session.get(STORAGE_KEYS.TRACKED_TABS);
+  return result[STORAGE_KEYS.TRACKED_TABS] ?? {};
+}
+
+/**
+ * Persists the tracked-tabs map to chrome.storage.session.
+ * @param {Record<string, number>} map
+ */
+async function setTrackedTabs(map) {
+  await chrome.storage.session.set({ [STORAGE_KEYS.TRACKED_TABS]: map });
 }
 
 /**

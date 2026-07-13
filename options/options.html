@@ -485,8 +485,72 @@
     .bookmark-pick-item.selected { background: var(--accent); color: var(--accent-text); }
 
     .bpi-title { flex: 1; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .bpi-url { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    .bpi-url { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px; }
     .bookmark-pick-item.selected .bpi-url { color: rgba(255,255,255,0.75); }
+
+    .key-badge-placeholder {
+      width: 60px;
+      flex-shrink: 0;
+    }
+
+    /* ─── Refocus Indicator ─── */
+    .loki-refocus-indicator {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      transition: all 0.25s ease;
+    }
+
+    .loki-refocus-indicator.refocus-off {
+      color: var(--text-muted);
+      opacity: 0.35;
+    }
+
+    .loki-refocus-indicator.refocus-on {
+      box-shadow: 0 2px 0 0 currentColor;
+    }
+
+    .loki-refocus-indicator.refocus-on.idle {
+      color: var(--text-muted);
+      opacity: 0.85;
+    }
+
+    .loki-refocus-indicator.refocus-on.live {
+      color: #22c55e;
+      filter: drop-shadow(0 0 2px rgba(34, 197, 94, 0.4));
+      animation: loki-indicator-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes loki-indicator-pulse {
+      0%, 100% { filter: drop-shadow(0 0 2px rgba(34, 197, 94, 0.3)); }
+      50%       { filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.7)); }
+    }
+
+    /* ─── Triple Row / Edit Layout (popup style) ─── */
+    .loki-edit-triple-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+
+    .loki-edit-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .loki-edit-col .loki-edit-label {
+      width: auto;
+      margin-bottom: 2px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
 
     /* Responsive */
     @media (max-width: 700px) {
@@ -539,33 +603,52 @@
 
         <!-- Add form -->
         <div id="add-form-wrapper">
-          <div class="card-title" style="margin-bottom:14px;">Add New Hotkey</div>
+          <div class="card-title" style="margin-bottom:14px;" id="add-form-title">Add New Hotkey</div>
+
+          <!-- Triple Row (Hotkey + Open In + Refocus) (popup style) -->
+          <div class="loki-edit-triple-row">
+            <div class="loki-edit-col" style="flex: 1.2; min-width: 0;">
+              <span class="loki-edit-label">Hotkey</span>
+              <div style="display: flex; gap: 4px; align-items: center; width: 100%;">
+                <input class="form-input key-capture-input" id="add-key-input" type="text"
+                       readonly placeholder="Capture…" aria-label="Press keys to capture shortcut" style="flex: 1; min-width: 0; height: 36px;" />
+              </div>
+            </div>
+            <div class="loki-edit-col" style="flex: 1; min-width: 0;">
+              <span class="loki-edit-label">Open in</span>
+              <select class="form-select" id="add-open-in" aria-label="Open bookmark in" style="width: 100%; height: 36px; padding: 6px 12px; font-size: 13.5px;">
+                <option value="new_tab">❐ New Tab</option>
+                <option value="current_tab">⟳ Current Tab</option>
+                <option value="new_window">❑ New Window</option>
+                <option value="new_incognito">🕵 New Incognito</option>
+              </select>
+            </div>
+            <div class="loki-edit-col" id="add-refocus-row" style="flex: 0.8; min-width: 0;">
+              <span class="loki-edit-label">Refocus</span>
+              <label class="toggle" style="margin-top: 7px; height: 22px;">
+                <input type="checkbox" id="add-refocus" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div id="add-conflict-msg" class="conflict-msg" style="display:none"></div>
 
           <!-- Bookmark search -->
-          <div class="form-row">
+          <div class="form-row" id="bm-search-row">
             <span class="form-label">Bookmark</span>
             <input class="form-input" id="bm-search" type="text" placeholder="Search your bookmarks…" autocomplete="off" />
           </div>
           <div class="bookmark-picker-results" id="bm-results" style="display:none"></div>
-          <div id="bm-selected-label" style="font-size:12px; color:var(--text-secondary); margin-bottom:10px; padding-left:102px; display:none;">
-            ✓ <span id="bm-selected-title"></span>
-          </div>
-
-          <!-- Hotkey capture -->
-          <div class="form-row">
-            <span class="form-label">Hotkey</span>
-            <input class="form-input key-capture-input" id="add-key-input" type="text" readonly placeholder="Click to capture key…" />
-          </div>
-          <div id="add-conflict-msg" class="conflict-msg" style="display:none"></div>
-
-          <!-- Open in -->
-          <div class="form-row">
-            <span class="form-label">Open in</span>
-            <select class="form-select" id="add-open-in">
-              <option value="new_tab">New Tab</option>
-              <option value="current_tab">Current Tab</option>
-              <option value="new_window">New Window</option>
-            </select>
+          <div id="bm-selected-label" style="display:none; font-size:13px; margin-bottom:14px; padding-left:102px; align-items:flex-start; gap:6px;">
+            <span style="color:var(--success); font-weight:bold; margin-top:1px;">✓</span>
+            <div style="display:flex; flex-direction:column; gap:2px; min-width:0; flex:1;">
+              <div style="font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                <span id="bm-selected-title"></span>
+                <a id="bm-selected-link" href="#" target="_blank" title="Test link (open in new tab)" style="color:var(--accent); text-decoration:underline; font-size:12px; display:none;">Test link ↗</a>
+              </div>
+              <div id="bm-selected-url" style="font-size:11px; color:var(--text-muted); word-break:break-all;"></div>
+            </div>
           </div>
 
           <!-- Folder behavior (shown for folders) -->

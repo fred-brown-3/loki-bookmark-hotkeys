@@ -46,23 +46,31 @@
       <div id="loki-edit-panel" role="form" aria-label="Edit bookmark">
         <div class="loki-edit-title" id="loki-edit-panel-title">Edit Bookmark</div>
         
-        <!-- Double Row (Hotkey + Open In) -->
-        <div class="loki-edit-double-row">
-          <div class="loki-edit-row" style="flex: 1;">
+        <!-- Triple Row (Hotkey + Open In + Refocus) -->
+        <div class="loki-edit-triple-row">
+          <div class="loki-edit-col" style="flex: 1.2; min-width: 0;">
             <span class="loki-edit-label">Hotkey</span>
-            <div style="display: flex; gap: 4px; flex: 1; min-width: 0;">
+            <div style="display: flex; gap: 4px; align-items: center; width: 100%;">
               <input class="loki-edit-input key-capture" id="loki-edit-key" type="text"
-                     readonly placeholder="Click to capture key…" aria-label="Press keys to capture shortcut" style="flex: 1; min-width: 0;" />
-              <button class="loki-btn" id="loki-edit-clear-key-btn" title="Clear hotkey" type="button" style="padding: 6px 8px;">Clear</button>
+                     readonly placeholder="Capture…" aria-label="Press keys to capture shortcut" style="flex: 1; min-width: 0;" />
+              <button class="loki-btn" id="loki-edit-clear-key-btn" title="Clear hotkey" type="button" style="padding: 5px 6px; font-size: 11px; flex-shrink: 0;">✕</button>
             </div>
           </div>
-          <div class="loki-edit-row" style="flex: 1;">
+          <div class="loki-edit-col" style="flex: 1; min-width: 0;">
             <span class="loki-edit-label">Open in</span>
-            <select class="loki-edit-select" id="loki-edit-open-in" aria-label="Open bookmark in">
-              <option value="new_tab">New Tab</option>
-              <option value="current_tab">Current Tab</option>
-              <option value="new_window">New Window</option>
+            <select class="loki-edit-select" id="loki-edit-open-in" aria-label="Open bookmark in" style="width: 100%;">
+              <option value="new_tab">❐ New Tab</option>
+              <option value="current_tab">⟳ Current Tab</option>
+              <option value="new_window">❑ New Window</option>
+              <option value="new_incognito">🕵 New Incognito</option>
             </select>
+          </div>
+          <div class="loki-edit-col" id="loki-edit-refocus-row" style="flex: 0.8; min-width: 0;">
+            <span class="loki-edit-label">Refocus</span>
+            <label class="loki-toggle-label" style="margin-top: 5px; height: 30px;">
+              <input type="checkbox" id="loki-edit-refocus" aria-label="Switch to existing tab if still on same domain" />
+              <span class="loki-toggle-track"><span class="loki-toggle-thumb"></span></span>
+            </label>
           </div>
         </div>
 

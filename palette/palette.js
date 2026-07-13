@@ -19,16 +19,21 @@ let searchResults = [];    // current list of items rendered
 // Key capture state for the edit form
 let capturingKey = false;
 let capturedKey = null;
+// Tab tracking for 'Refocus if open'
+let trackedTabsMap = {};  // { [bindingId]: tabId } — from chrome.storage.session
+let liveTrackedTabs = new Set(); // bindingIds whose tracked tab is currently alive + on-domain
 
 /* ─── DOM References (populated in init) ──────────────────────────────── */
 let $results, $search, $modeBadge, $editPanel, $empty, $breadcrumb;
 let $editTitle, $editUrl, $editKeyCapture, $editOpenIn, $editFolderBehavior;
-let $editFolderRow, $conflictWarning;
+let $editFolderRow, $conflictWarning, $editRefocus;
 
 /* ─── Entry Point ────────────────────────────────────────────────────────── */
-function initPalette(root, hotkeys, cfg) {
+function initPalette(root, hotkeys, cfg, trackedTabs, liveTabs) {
   allHotkeys = hotkeys;
   settings = cfg;
+  trackedTabsMap = trackedTabs ?? {};
+  liveTrackedTabs = liveTabs ?? new Set();
 
   bindDOMRefs(root);
   attachEventListeners();
@@ -63,6 +68,7 @@ function bindDOMRefs(root) {
   $editFolderBehavior = root.getElementById('loki-edit-folder-behavior');
   $editFolderRow = root.getElementById('loki-edit-folder-row');
   $conflictWarning = root.getElementById('loki-conflict-warning');
+  $editRefocus = root.getElementById('loki-edit-refocus');
 }
 
 /* ─── Event Listeners ────────────────────────────────────────────────────── */
@@ -126,6 +132,16 @@ function attachEventListeners() {
   $editKeyCapture.addEventListener('click', startKeyCapture);
   $editKeyCapture.addEventListener('keydown', onKeyCaptureKeydown);
   $editKeyCapture.addEventListener('blur', stopKeyCapture);
+
+  $editOpenIn.addEventListener('change', () => {
+    const isFolder = editingBinding?.isFolder ?? false;
+    const openIn = $editOpenIn.value;
+    const refocusRow = document.getElementById('loki-edit-refocus-row');
+    if (refocusRow) {
+      refocusRow.style.display = (isFolder || openIn === 'current_tab') ? 'none' : '';
+    }
+    checkIncognitoWarning(openIn);
+  });
 
   $editPanel.querySelector('#loki-edit-cancel')?.addEventListener('click', closeEditPanel);
   $editPanel.querySelector('#loki-edit-save')?.addEventListener('click', saveEdit);
@@ -453,6 +469,12 @@ function buildItemEl(item, index) {
   const faviconEl = buildFavicon(item);
   el.appendChild(faviconEl);
 
+  // Refocus/open method indicator immediately to the right of the favicon
+  const indicatorEl = buildOpenMethodIndicator(item);
+  if (indicatorEl) {
+    el.appendChild(indicatorEl);
+  }
+
   // Text
   const textEl = document.createElement('div');
   textEl.className = 'loki-item-text';
@@ -607,25 +629,88 @@ function activateItem(item) {
 }
 
 function handleOpenBookmark(binding) {
-  const { url, openIn } = binding;
-  if (!url) return;
+  if (!binding.url) return;
+  chrome.runtime.sendMessage({ action: 'open_bookmark', binding });
+}
 
-  switch (openIn) {
-    case 'current_tab':
-      chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-        if (tab) chrome.tabs.update(tab.id, { url });
-      });
-      break;
-
-    case 'new_window':
-      chrome.windows.create({ url });
-      break;
-
-    case 'new_tab':
-    default:
-      chrome.tabs.create({ url });
-      break;
+/**
+ * Builds the visual indicator to the right of the favicon,
+ * showing whether the bookmark has refocus active and if it has a live tab.
+ */
+function buildOpenMethodIndicator(item) {
+  // Folder items don't have an open method or refocus option
+  if (item.isFolder || !item.url) {
+    return null;
   }
+
+  const indicator = document.createElement('span');
+  const openIn = item.openIn ?? 'new_tab';
+  const refocusEnabled = item.refocusIfOpen !== false && openIn !== 'current_tab' && item.id;
+  const isLive = refocusEnabled && liveTrackedTabs.has(item.id);
+
+  // Class structure: loki-refocus-indicator + (refocus-on [live|idle] | refocus-off)
+  let className = 'loki-refocus-indicator';
+  if (refocusEnabled) {
+    className += ' refocus-on';
+    className += isLive ? ' live' : ' idle';
+  } else {
+    className += ' refocus-off';
+  }
+  indicator.className = className;
+
+  // Accessible hover titles
+  if (refocusEnabled) {
+    indicator.title = isLive
+      ? `Open in: ${openIn === 'new_window' ? 'New Window' : openIn === 'new_incognito' ? 'Incognito' : 'New Tab'} (Refocus expected: tab is open)`
+      : `Open in: ${openIn === 'new_window' ? 'New Window' : openIn === 'new_incognito' ? 'Incognito' : 'New Tab'} (Refocus active, but no open tab)`;
+  } else {
+    indicator.title = `Open in: ${openIn === 'current_tab' ? 'Current Tab' : openIn === 'new_window' ? 'New Window' : openIn === 'new_incognito' ? 'Incognito Window' : 'New Tab'}`;
+  }
+
+  const strokeWidth = refocusEnabled ? '2.5' : '1.8';
+
+  const tabSvg = `
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2.5 4.5h7a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1z"/>
+      <path d="M5.5 2.5h7a1 1 0 0 1 1 1v7"/>
+    </svg>
+  `;
+
+  const winSvg = `
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="2.5" width="12" height="11" rx="1.5"/>
+      <line x1="2" y1="5.5" x2="14" y2="5.5"/>
+    </svg>
+  `;
+
+  const currentSvg = `
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13.5 8a5.5 5.5 0 1 1-5.5-5.5h2.5"/>
+      <path d="M8.5 5l2.5-2.5L8.5 0"/>
+    </svg>
+  `;
+
+  const incognitoSvg = `
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 13h12"/>
+      <circle cx="5.5" cy="11.5" r="2"/>
+      <circle cx="10.5" cy="11.5" r="2"/>
+      <path d="M7.5 11.5h1"/>
+      <path d="M3.5 8L5.5 3.5h5L12.5 8"/>
+    </svg>
+  `;
+
+  if (openIn === 'new_window') {
+    indicator.innerHTML = winSvg;
+  } else if (openIn === 'current_tab') {
+    indicator.innerHTML = currentSvg;
+  } else if (openIn === 'new_incognito') {
+    indicator.innerHTML = incognitoSvg;
+  } else {
+    indicator.innerHTML = tabSvg;
+  }
+
+  return indicator;
 }
 
 function handleFolderActivation(item) {
@@ -731,6 +816,16 @@ function openEditPanel(item) {
   $editOpenIn.value = item.openIn ?? 'new_tab';
   $conflictWarning.textContent = '';
 
+  // Refocus toggle: ON by default (true if undefined), hidden for folders and current_tab
+  const isFolder = item.isFolder ?? false;
+  const openIn = item.openIn ?? 'new_tab';
+  const refocusRow = document.getElementById('loki-edit-refocus-row');
+  if (refocusRow) {
+    refocusRow.style.display = (isFolder || openIn === 'current_tab') ? 'none' : '';
+  }
+  $editRefocus.checked = item.refocusIfOpen !== false && !isFolder;
+  checkIncognitoWarning(openIn);
+
   if (item.key) {
     capturedKey = item.key;
   } else {
@@ -835,6 +930,7 @@ async function saveEdit() {
     key: capturedKey,
     openIn: $editOpenIn.value,
     folderBehavior: editingBinding.isFolder ? $editFolderBehavior.value : undefined,
+    refocusIfOpen: editingBinding.isFolder ? undefined : $editRefocus.checked,
   };
 
   // Save to storage
@@ -1178,6 +1274,22 @@ function checkConflict() {
   }
 }
 
+function checkIncognitoWarning(openIn) {
+  if (openIn === 'new_incognito') {
+    chrome.extension.isAllowedIncognitoAccess((isAllowed) => {
+      if (!isAllowed) {
+        $conflictWarning.textContent = '⚠ Enable "Allow in Incognito" in Loki Extension details to open bookmarks incognito.';
+        $conflictWarning.style.display = 'block';
+      } else {
+        // Fall back to standard key conflict warning
+        checkConflict();
+      }
+    });
+  } else {
+    checkConflict();
+  }
+}
+
 function getRecommendedKey(title) {
   if (!title) return null;
   const words = title.split(/\s+/).map(w => w.replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean);
@@ -1276,7 +1388,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     ...(result.settings ?? {}),
   };
 
-  initPalette(document, hotkeys, settings);
+  // Load tracked tabs from session storage and validate which are still live + on-domain
+  let trackedTabs = {};
+  const liveSet = new Set();
+  try {
+    const sessionData = await chrome.storage.session.get('lokiTrackedTabs');
+    trackedTabs = sessionData.lokiTrackedTabs ?? {};
+
+    // Bulk-check all tracked tabIds
+    const bindingIds = Object.keys(trackedTabs);
+    if (bindingIds.length > 0) {
+      // Build a map of bindingId → bookmark URL for domain comparison
+      const urlByBindingId = {};
+      hotkeys.forEach((h) => { if (h.id && h.url) urlByBindingId[h.id] = h.url; });
+
+      await Promise.all(bindingIds.map((bindingId) => new Promise((resolve) => {
+        const tabId = trackedTabs[bindingId];
+        chrome.tabs.get(tabId, (tab) => {
+          if (chrome.runtime.lastError || !tab) { resolve(); return; }
+          const bmUrl = urlByBindingId[bindingId];
+          if (!bmUrl) { resolve(); return; }
+          try {
+            const bmHost = new URL(bmUrl).hostname;
+            const tabHost = new URL(tab.url || '').hostname;
+            if (bmHost && tabHost && bmHost === tabHost) liveSet.add(bindingId);
+          } catch { /* invalid URL — skip */ }
+          resolve();
+        });
+      })));
+    }
+  } catch (err) {
+    console.warn('[Loki] Could not load tracked tabs:', err);
+  }
+
+  initPalette(document, hotkeys, settings, trackedTabs, liveSet);
 });
 
 }()); // ← IIFE end
