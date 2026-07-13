@@ -8,61 +8,85 @@
 
 /* ─── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
-  /* Light mode */
-  --bg: #FDFAF5;
-  --surface: #F5EFE0;
-  --surface-hover: #EDE3CF;
-  --border: #DDD3BC;
-  --border-focus: #C4873B;
-  --accent: #C4873B;
-  --accent-hover: #A96F28;
+  /* Light mode: Cream with Olive, Blue, Green, and Brown tones */
+  --bg: #FDFAF5;                     /* Warm cream base */
+  --surface: #F5EFE0;                /* Soft cream surface */
+  --surface-hover: #EDE3CF;          /* Surface hover */
+  --border: #DDD3BC;                 /* Linen/warm sand border */
+  --border-focus: #8C5A3C;           /* Earthy Chestnut Brown focus */
+  --accent: #8C5A3C;                 /* Earthy Chestnut Brown accent */
+  --accent-hover: #70442B;           /* Darker chestnut brown */
   --accent-text: #FFFFFF;
-  --text-primary: #2C2416;
-  --text-secondary: #7A6D5A;
-  --text-muted: #A89880;
-  --badge-bg: #EDE3CF;
-  --badge-text: #5A4020;
+  --text-primary: #2C2416;           /* Dark espresso brown text */
+  --text-secondary: #58634B;         /* Sage Olive secondary text */
+  --text-muted: #A89880;             /* Linen muted text */
+  --badge-bg: #EDE3CF;               /* Linen badge bg */
+  --badge-text: #8C5A3C;             /* Chestnut badge text */
   --badge-border: #D4B896;
   --input-bg: #FFFFFF;
-  --shadow: 0 20px 60px rgba(44, 36, 22, 0.18), 0 4px 16px rgba(44, 36, 22, 0.10);
-  --backdrop: rgba(44, 36, 22, 0.45);
-  --success: #5A8A5A;
-  --danger: #B85050;
-  --folder-color: #8A6A3A;
+  --shadow: 0 20px 60px rgba(44, 36, 22, 0.15), 0 4px 16px rgba(44, 36, 22, 0.08);
+  --backdrop: rgba(44, 36, 22, 0.40);
+  --success: #5A8A5A;                /* Forest Green success */
+  --danger: #B85050;                 /* Warm red danger */
+  --folder-color: #606C38;           /* Deep Olive Green folder */
+
+  /* Blue-theme values specifically for Search mode badge and highlight matching */
+  --search-badge-bg: #E8EEF3;
+  --search-badge-text: #2A6F97;
+  --search-badge-border: #C7D5E2;
+  --search-highlight-bg: rgba(42, 111, 151, 0.12);
+  --search-highlight-text: #2A6F97;
+
   --radius: 14px;
-  --radius-sm: 8px;
-  --radius-xs: 5px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
   --transition: 0.15s ease;
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --frame: #DDD3BC;                  /* Warm sand frame border */
+  --frame-bg: #EDE3CF;               /* Frame background */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1C1A17;
-    --surface: #2A2720;
-    --surface-hover: #332F28;
-    --border: #3D3A34;
-    --border-focus: #D4975A;
-    --accent: #D4975A;
-    --accent-hover: #E8AA70;
+    --bg: #1C1A17;                   /* Warm obsidian charcoal base */
+    --surface: #2A2720;              /* Soft dark wood surface */
+    --surface-hover: #332F28;        /* Surface hover state */
+    --border: #3D3A34;               /* Dark wood border */
+    --border-focus: #D4A373;         /* Cinnamon amber focus/accent */
+    --accent: #D4A373;
+    --accent-hover: #E3B68A;
     --accent-text: #1C1A17;
-    --text-primary: #F0EAD8;
-    --text-secondary: #9A907E;
+    --text-primary: #F5EBE0;         /* Soft warm cream text */
+    --text-secondary: #A3B18A;       /* Sage Olive secondary text */
     --text-muted: #6A6050;
     --badge-bg: #332F28;
-    --badge-text: #D4975A;
+    --badge-text: #D4A373;
     --badge-border: #4A4538;
     --input-bg: #232018;
-    --shadow: 0 20px 60px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.35);
-    --backdrop: rgba(0, 0, 0, 0.65);
+    --shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
+    --backdrop: rgba(0, 0, 0, 0.6);
+    --folder-color: #A3B18A;         /* Olive folder */
+
+    --search-badge-bg: #1C232B;
+    --search-badge-text: #64B5F6;
+    --search-badge-border: #323E4C;
+    --search-highlight-bg: rgba(100, 181, 246, 0.18);
+    --search-highlight-text: #64B5F6;
+    --frame: #2A2720;                /* Dark wood frame border */
+    --frame-bg: #131110;             /* Dark frame background */
   }
+}
+html {
+  background: var(--frame-bg);
+  overflow: hidden;
 }
 body {
   width: 600px;
   height: 400px;
   margin: 0;
+  padding: 6px;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--frame-bg);
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────────────── */
@@ -74,13 +98,18 @@ body {
 
 /* ─── Backdrop ───────────────────────────────────────────────────────────── */
 #loki-backdrop {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  height: 100%;
   z-index: 2147483646;
   display: flex;
   align-items: stretch;
   justify-content: stretch;
   background: var(--bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--frame);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--frame);
 }
 
 /* ─── Palette Container ──────────────────────────────────────────────────── */
@@ -92,6 +121,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border-radius: var(--radius);
 }
 
 /* ─── Header ─────────────────────────────────────────────────────────────── */
@@ -140,12 +170,40 @@ body {
   border: 1px solid var(--badge-border);
   white-space: nowrap;
   transition: var(--transition);
+  cursor: pointer;
+  user-select: none;
+}
+
+#loki-mode-badge:hover {
+  filter: brightness(0.95);
+  transform: translateY(-0.5px);
+}
+
+#loki-mode-badge:active {
+  transform: translateY(0.5px);
 }
 
 #loki-mode-badge.search-mode {
-  background: var(--accent);
-  color: var(--accent-text);
-  border-color: var(--accent);
+  background: var(--search-badge-bg);
+  color: var(--search-badge-text);
+  border-color: var(--search-badge-border);
+}
+
+.loki-hint.clickable {
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  transition: background var(--transition), color var(--transition), transform var(--transition);
+}
+
+.loki-hint.clickable:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  transform: translateY(-0.5px);
+}
+
+.loki-hint.clickable:active {
+  transform: translateY(0.5px);
 }
 
 /* ─── Breadcrumb ─────────────────────────────────────────────────────────── */
@@ -324,8 +382,17 @@ body {
 .loki-key-badge {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 3px;
   flex-shrink: 0;
+  width: 60px;
+  margin-right: 4px;
+}
+
+.loki-key-badge-placeholder {
+  width: 60px;
+  flex-shrink: 0;
+  margin-right: 4px;
 }
 
 .loki-key {
@@ -413,6 +480,12 @@ body {
   color: var(--accent);
 }
 
+.loki-edit-double-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
 .loki-edit-select {
   font-family: var(--font);
   font-size: 13px;
@@ -423,6 +496,8 @@ body {
   color: var(--text-primary);
   outline: none;
   cursor: pointer;
+  flex: 1;
+  width: 100%;
 }
 
 .loki-edit-actions {
@@ -459,6 +534,16 @@ body {
 .loki-btn.primary:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
+}
+
+.loki-btn.danger {
+  color: var(--danger);
+}
+
+.loki-btn.danger:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
 }
 
 /* ─── Empty & Loading States ─────────────────────────────────────────────── */
@@ -551,9 +636,11 @@ body {
 
 /* ─── Search Highlight ───────────────────────────────────────────────────── */
 mark.loki-mark {
-  background: transparent;
-  color: var(--accent);
+  background: var(--search-highlight-bg);
+  color: var(--search-highlight-text);
   font-weight: 600;
+  border-radius: 2px;
+  padding: 0 2px;
 }
 
 /* ─── Animations ─────────────────────────────────────────────────────────── */
@@ -571,4 +658,85 @@ mark.loki-mark {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* ─── Hamburger Menu Button ──────────────────────────────────────────────── */
+.loki-menu-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  font-weight: bold;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+  opacity: 1;
+}
+
+.loki-menu-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* ─── Dropdown Menu ──────────────────────────────────────────────────────── */
+.loki-dropdown-menu {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: 6px;
+  min-width: 170px;
+  animation: loki-dropdown-in 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes loki-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.loki-dropdown-item {
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition), color var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loki-dropdown-item:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.loki-dropdown-item.danger {
+  color: var(--danger);
+}
+
+.loki-dropdown-item.danger:hover {
+  background: rgba(184, 80, 80, 0.1);
+  color: var(--danger);
+}
+
+.loki-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
 }

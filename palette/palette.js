@@ -35,23 +35,21 @@ function initPalette(root, hotkeys, cfg) {
 
   bindDOMRefs(root);
   attachEventListeners();
+  updateSearchPlaceholder();
   renderHotkeyMode();
 
   // Focus the search input
   $search.focus();
 }
 
-          <span class="loki-hint">
-            <kbd class="loki-hint-key">E</kbd> edit
-          </span>
-          <span class="loki-hint">
-            <kbd class="loki-hint-key">Esc</kbd> close
-          </span>
-        </div>
-      </div>
-    </div>
-  `;
+function updateSearchPlaceholder() {
+  if (allHotkeys.length === 0) {
+    $search.placeholder = "No hotkeys defined. Press Shift+Space to bookmark current page.";
+  } else {
+    $search.placeholder = "Press a hotkey, Space to search, or Shift+Space to bookmark page";
+  }
 }
+
 
 /* ─── DOM Refs ───────────────────────────────────────────────────────────── */
 function bindDOMRefs(root) {
@@ -72,6 +70,21 @@ function bindDOMRefs(root) {
 
 /* ─── Event Listeners ────────────────────────────────────────────────────── */
 function attachEventListeners() {
+  // Intercept Escape key to close active dropdown or edit panel before closing popup
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (activeDropdown) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeDropdown();
+      } else if (editingBinding) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeEditPanel();
+      }
+    }
+  }, true);
+
   // Click on backdrop (not palette) → close
   const backdrop = $results.closest('#loki-backdrop');
   backdrop.addEventListener('mousedown', (e) => {
@@ -82,6 +95,32 @@ function attachEventListeners() {
   $search.addEventListener('input', onSearchInput);
   $search.addEventListener('keydown', onSearchKeydown);
 
+  // Mode badge click
+  $modeBadge.addEventListener('click', toggleMode);
+
+  // Footer hints buttons
+  document.getElementById('loki-hint-bookmark')?.addEventListener('click', () => {
+    setupHotkeyForCurrentPage();
+  });
+
+  document.getElementById('loki-hint-open')?.addEventListener('click', () => {
+    const items = getVisibleItems();
+    if (items[activeIndex]) {
+      activateItem(searchResults[activeIndex]);
+    }
+  });
+
+  document.getElementById('loki-hint-edit')?.addEventListener('click', () => {
+    const items = getVisibleItems();
+    if (items[activeIndex] && !capturingKey) {
+      openEditPanel(searchResults[activeIndex]);
+    }
+  });
+
+  document.getElementById('loki-hint-close')?.addEventListener('click', () => {
+    dispatchClose();
+  });
+
   // Edit form — use shadow root refs (document.getElementById won't find shadow DOM elements)
   $editKeyCapture.addEventListener('click', startKeyCapture);
   $editKeyCapture.addEventListener('keydown', onKeyCaptureKeydown);
@@ -89,16 +128,69 @@ function attachEventListeners() {
 
   $editPanel.querySelector('#loki-edit-cancel')?.addEventListener('click', closeEditPanel);
   $editPanel.querySelector('#loki-edit-save')?.addEventListener('click', saveEdit);
-  $editPanel.querySelector('#loki-edit-chrome-btn')?.addEventListener('click', openInChrome);
   $empty.querySelector('#loki-open-settings')?.addEventListener('click', openSettings);
+
+  $editPanel.querySelector('#loki-edit-clear-key-btn')?.addEventListener('click', () => {
+    capturedKey = null;
+    $editKeyCapture.value = '';
+    $conflictWarning.style.display = 'none';
+  });
+
+  $editPanel.querySelector('#loki-edit-delete-bookmark-btn')?.addEventListener('click', () => {
+    if (!editingBinding?.bookmarkId) return;
+    const msg = editingBinding.isFolder
+      ? 'Are you sure you want to delete this folder and all of its bookmarks?'
+      : 'Are you sure you want to delete this bookmark?';
+    if (!confirm(msg)) return;
+
+    const callback = () => {
+      if (editingBinding.id) {
+        removeHotkeyBinding(editingBinding.id);
+      } else {
+        if (mode === 'search') {
+          enterSearchMode();
+        } else {
+          renderHotkeyMode();
+        }
+      }
+      closeEditPanel();
+    };
+
+    if (editingBinding.isFolder) {
+      chrome.bookmarks.removeTree(editingBinding.bookmarkId, () => {
+        if (chrome.runtime.lastError) console.warn('[Loki] Error removing folder:', chrome.runtime.lastError);
+        callback();
+      });
+    } else {
+      chrome.bookmarks.remove(editingBinding.bookmarkId, () => {
+        if (chrome.runtime.lastError) console.warn('[Loki] Error removing bookmark:', chrome.runtime.lastError);
+        callback();
+      });
+    }
+  });
 
   // Storage changes live-update bindings
   chrome.storage.onChanged.addListener((changes) => {
     if (changes.hotkeys) {
       allHotkeys = changes.hotkeys.newValue ?? [];
+      updateSearchPlaceholder();
       if (mode === 'hotkeys') renderHotkeyMode();
     }
   });
+}
+
+function toggleMode() {
+  if (mode === 'hotkeys') {
+    $search.value = ' ';
+    searchQuery = ' ';
+    enterSearchMode();
+    $search.focus();
+  } else {
+    $search.value = '';
+    searchQuery = '';
+    exitSearchMode();
+    $search.focus();
+  }
 }
 
 /* ─── Search Input Handling ──────────────────────────────────────────────── */
@@ -130,7 +222,13 @@ function onSearchKeydown(e) {
 
     case 'Enter':
       e.preventDefault();
-      if (items[activeIndex]) activateItem(searchResults[activeIndex]);
+      if (e.shiftKey) {
+        if (items[activeIndex] && !capturingKey) {
+          openEditPanel(searchResults[activeIndex]);
+        }
+      } else {
+        if (items[activeIndex]) activateItem(searchResults[activeIndex]);
+      }
       break;
 
     case 'Escape':
@@ -156,25 +254,35 @@ function onSearchKeydown(e) {
       }
       break;
 
-    case 'e':
-    case 'E':
-      if (mode !== 'search' && items[activeIndex] && !capturingKey) {
-        // Only trigger edit shortcut if search is empty
-        if (searchQuery === '') {
-          e.preventDefault();
-          openEditPanel(searchResults[activeIndex]);
-        }
+    case ' ':
+      if (e.shiftKey && mode === 'hotkeys' && !editingBinding) {
+        e.preventDefault();
+        e.stopPropagation();
+        setupHotkeyForCurrentPage();
       }
       break;
 
     default:
-      // In hotkey mode, check if pressed key matches a binding
-      if (mode === 'hotkeys' && !capturingKey && searchQuery === '') {
-        const match = findHotkeyMatch(e);
-        if (match) {
+      // If we are in hotkeys mode
+      if (mode === 'hotkeys' && !capturingKey) {
+        // 1. If it's a Space key, let it pass (it will type space, trigger onSearchInput, and enter search mode)
+        if (e.key === ' ' || e.code === 'Space') {
+          return;
+        }
+
+        // 2. If it's a hotkey, run it
+        const matches = findHotkeyMatches(e);
+        if (matches.length > 0) {
           e.preventDefault();
           e.stopPropagation();
-          activateItem(match);
+          activateMultipleItems(matches);
+          return;
+        }
+
+        // 3. Prevent typing other character keys
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          e.stopPropagation();
         }
       }
       break;
@@ -211,8 +319,25 @@ function renderHotkeyMode() {
     // Show children of the drilled-into folder
     items = allHotkeys.filter((h) => h.parentFolderId === currentFolder.bookmarkId);
   } else {
-    // Top-level: show all hotkeys without a parent folder constraint
-    items = allHotkeys.filter((h) => !h.parentFolderId);
+    // Top-level: show all hotkeys whose parent folder is not also a hotkey folder in our list
+    items = allHotkeys.filter((h) => {
+      return !allHotkeys.some((folder) => folder.isFolder && folder.bookmarkId === h.parentFolderId);
+    });
+  }
+
+  // Sort list by hotkey alphabetically
+  try {
+    items.sort((a, b) => {
+      const getSortKey = (h) => {
+        if (!h.key || !h.key.code) return 'zzzzz';
+        const label = codeToLabel(h.key.code).toLowerCase();
+        const shiftPart = h.key.shift ? '2' : '1';
+        return `${label}_${shiftPart}`;
+      };
+      return getSortKey(a).localeCompare(getSortKey(b));
+    });
+  } catch (err) {
+    console.error('[Loki] Error sorting hotkeys:', err);
   }
 
   searchResults = items;
@@ -232,13 +357,12 @@ function enterSearchMode() {
   folderStack = []; // Reset folder navigation in search mode
   renderBreadcrumb();
 
-  const query = searchQuery.toLowerCase();
-  chrome.bookmarks.search({ query: searchQuery }, (results) => {
-    // Filter to only bookmark nodes (not folders)
-    const bookmarks = (results || []).filter((r) => r.url);
+  const queryStr = searchQuery.startsWith(' ') ? searchQuery.slice(1) : searchQuery;
+  const query = queryStr.toLowerCase();
 
-    // Substring match against title and URL
-    const filtered = bookmarks.filter((r) => {
+  const handleSearchResults = (results) => {
+    // Keep both bookmarks and folders
+    const filtered = (results || []).filter((r) => {
       const title = (r.title || '').toLowerCase();
       const url = (r.url || '').toLowerCase();
       return title.includes(query) || url.includes(query);
@@ -247,26 +371,40 @@ function enterSearchMode() {
     // Mark which ones already have a hotkey assigned
     const enriched = filtered.map((r) => {
       const existingBinding = allHotkeys.find((h) => h.bookmarkId === r.id);
+      if (existingBinding) {
+        return {
+          ...existingBinding,
+          _searchResult: true,
+          _query: queryStr,
+          existingBinding,
+        };
+      }
       return {
         bookmarkId: r.id,
         title: r.title || 'Untitled',
         url: r.url,
-        isFolder: false,
-        existingBinding,
-        // Used for rendering
+        isFolder: !r.url,
         _searchResult: true,
-        _query: searchQuery,
+        _query: queryStr,
       };
     });
 
     searchResults = enriched;
-    renderItems(enriched, `Results for "${searchQuery}"`);
+    renderItems(enriched, queryStr ? `Results for "${queryStr}"` : 'Recent Bookmarks');
     activeIndex = 0;
     updateActiveItem();
-  });
+  };
+
+  if (queryStr === '') {
+    chrome.bookmarks.getRecent(50, handleSearchResults);
+  } else {
+    chrome.bookmarks.search({ query: queryStr }, handleSearchResults);
+  }
 }
 
 function exitSearchMode() {
+  $search.value = '';
+  searchQuery = '';
   renderHotkeyMode();
 }
 
@@ -301,6 +439,15 @@ function buildItemEl(item, index) {
   el.setAttribute('data-index', index);
   el.setAttribute('tabindex', '-1');
 
+  // Key badge or placeholder on the left
+  if (item.key) {
+    el.appendChild(buildKeyBadge(item.key));
+  } else {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'loki-key-badge-placeholder';
+    el.appendChild(placeholder);
+  }
+
   // Favicon
   const faviconEl = buildFavicon(item);
   el.appendChild(faviconEl);
@@ -323,7 +470,7 @@ function buildItemEl(item, index) {
 
   el.appendChild(textEl);
 
-  // Folder arrow or key badge
+  // Folder arrow on the right
   if (item.isFolder) {
     const arrow = document.createElement('span');
     arrow.className = 'loki-folder-arrow';
@@ -331,50 +478,15 @@ function buildItemEl(item, index) {
     el.appendChild(arrow);
   }
 
-  if (item.key) {
-    el.appendChild(buildKeyBadge(item.key));
-  } else if (item._searchResult) {
-    // In search mode: show [+ Assign] button
-    const assignBtn = document.createElement('button');
-    assignBtn.className = 'loki-action-btn';
-    assignBtn.textContent = '+ Assign Key';
-    assignBtn.title = 'Assign a hotkey to this bookmark';
-    assignBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openEditPanel(item);
-    });
-    el.appendChild(assignBtn);
-  }
-
-  // Edit/Delete buttons (appear on hover)
-  const actions = document.createElement('div');
-  actions.className = 'loki-item-actions';
-
-  if (!item._searchResult || item.existingBinding) {
-    const editBtn = document.createElement('button');
-    editBtn.className = 'loki-action-btn';
-    editBtn.textContent = 'Edit';
-    editBtn.title = 'Edit this bookmark (E)';
-    editBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openEditPanel(item.existingBinding ?? item);
-    });
-    actions.appendChild(editBtn);
-
-    if (!item._searchResult) {
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'loki-action-btn danger';
-      deleteBtn.textContent = 'Remove';
-      deleteBtn.title = 'Remove hotkey assignment';
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        removeHotkeyBinding(item.id);
-      });
-      actions.appendChild(deleteBtn);
-    }
-  }
-
-  el.appendChild(actions);
+  // Hamburger Menu button
+  const menuBtn = document.createElement('button');
+  menuBtn.className = 'loki-menu-btn';
+  menuBtn.innerHTML = '⋮';
+  menuBtn.title = 'Actions';
+  menuBtn.addEventListener('mousedown', (e) => {
+    openDropdownMenu(e, item, menuBtn);
+  });
+  el.appendChild(menuBtn);
 
   // Click to activate
   el.addEventListener('mousedown', (e) => {
@@ -459,6 +571,7 @@ function escapeHtml(str) {
 function buildKeyBadge(key) {
   const wrapper = document.createElement('div');
   wrapper.className = 'loki-key-badge';
+  if (!key) return wrapper;
 
   if (key.shift) {
     const k = document.createElement('span');
@@ -467,10 +580,12 @@ function buildKeyBadge(key) {
     wrapper.appendChild(k);
   }
 
-  const k = document.createElement('span');
-  k.className = 'loki-key';
-  k.textContent = codeToLabel(key.code);
-  wrapper.appendChild(k);
+  if (key.code) {
+    const k = document.createElement('span');
+    k.className = 'loki-key';
+    k.textContent = codeToLabel(key.code);
+    wrapper.appendChild(k);
+  }
 
   return wrapper;
 }
@@ -616,12 +731,12 @@ function openEditPanel(item) {
   $conflictWarning.textContent = '';
 
   if (item.key) {
-    $editKeyCapture.value = keyToLabel(item.key);
     capturedKey = item.key;
   } else {
-    $editKeyCapture.value = '';
-    capturedKey = null;
+    capturedKey = getRecommendedKey(item.title);
   }
+
+  $editKeyCapture.value = capturedKey ? keyToLabel(capturedKey) : '';
 
   if (item.isFolder) {
     $editFolderRow.style.display = '';
@@ -632,6 +747,7 @@ function openEditPanel(item) {
 
   $editPanel.classList.add('visible');
   $editTitle.focus();
+  checkConflict();
 }
 
 function closeEditPanel() {
@@ -648,24 +764,61 @@ async function saveEdit() {
   const title = $editTitle.value.trim();
   const url = $editUrl.value.trim();
 
-  // Validate conflict
-  if (capturedKey) {
-    const conflict = allHotkeys.find(
-      (h) => h.id !== editingBinding.id &&
-             h.key?.code === capturedKey.code &&
-             !!h.key?.shift === !!capturedKey.shift &&
-             (h.parentFolderId ?? null) === (editingBinding.parentFolderId ?? null)
-    );
-    if (conflict) {
-      $conflictWarning.textContent = `⚠ Conflict with "${conflict.title}"`;
-      return;
+  if (!capturedKey) {
+    let bookmarkId = editingBinding.bookmarkId;
+    if (!bookmarkId) {
+      try {
+        const newBm = await new Promise((resolve, reject) => {
+          chrome.bookmarks.create({ title, url: url || undefined }, (result) => {
+            if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+            else resolve(result);
+          });
+        });
+        bookmarkId = newBm.id;
+      } catch (err) {
+        console.warn('[Loki] Could not create bookmark:', err);
+      }
+    } else {
+      try {
+        await chrome.bookmarks.update(bookmarkId, { title, url: url || undefined });
+      } catch (err) {
+        console.warn('[Loki] Could not update bookmark:', err);
+      }
     }
+
+    if (editingBinding.id) {
+      const result = await chrome.storage.sync.get('hotkeys');
+      const hotkeys = (result.hotkeys ?? []).filter((h) => h.id !== editingBinding.id);
+      await chrome.storage.sync.set({ hotkeys });
+      allHotkeys = hotkeys;
+    }
+    closeEditPanel();
+    if (mode === 'search') {
+      enterSearchMode();
+    } else {
+      renderHotkeyMode();
+    }
+    return;
   }
 
-  // Update bookmark title/URL via chrome.bookmarks API
-  if (editingBinding.bookmarkId && !editingBinding._searchResult) {
+  // Update or create bookmark via chrome.bookmarks API
+  let bookmarkId = editingBinding.bookmarkId;
+  if (!bookmarkId) {
     try {
-      await chrome.bookmarks.update(editingBinding.bookmarkId, { title, url: url || undefined });
+      const newBm = await new Promise((resolve, reject) => {
+        chrome.bookmarks.create({ title, url: url || undefined }, (result) => {
+          if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+          else resolve(result);
+        });
+      });
+      bookmarkId = newBm.id;
+    } catch (err) {
+      console.warn('[Loki] Could not create bookmark:', err);
+      return;
+    }
+  } else {
+    try {
+      await chrome.bookmarks.update(bookmarkId, { title, url: url || undefined });
     } catch (err) {
       console.warn('[Loki] Could not update bookmark:', err);
     }
@@ -674,16 +827,16 @@ async function saveEdit() {
   // Build updated binding
   const updatedBinding = {
     ...editingBinding,
+    bookmarkId,
     id: editingBinding.id ?? generateId(),
     title,
     url,
-    key: capturedKey ?? editingBinding.key,
+    key: capturedKey,
     openIn: $editOpenIn.value,
     folderBehavior: editingBinding.isFolder ? $editFolderBehavior.value : undefined,
   };
 
-  // Save to storage via message (background can't do sync in MV3 content scripts)
-  // We use chrome.storage.sync directly here since this runs in a content script context
+  // Save to storage
   const result = await chrome.storage.sync.get('hotkeys');
   const hotkeys = result.hotkeys ?? [];
   const idx = hotkeys.findIndex((h) => h.id === updatedBinding.id);
@@ -696,7 +849,11 @@ async function saveEdit() {
 
   allHotkeys = hotkeys;
   closeEditPanel();
-  renderHotkeyMode();
+  if (mode === 'search') {
+    enterSearchMode();
+  } else {
+    renderHotkeyMode();
+  }
 }
 
 function removeHotkeyBinding(id) {
@@ -705,18 +862,16 @@ function removeHotkeyBinding(id) {
     const updated = hotkeys.filter((h) => h.id !== id);
     chrome.storage.sync.set({ hotkeys: updated }, () => {
       allHotkeys = updated;
-      renderHotkeyMode();
+      if (mode === 'search') {
+        enterSearchMode();
+      } else {
+        renderHotkeyMode();
+      }
     });
   });
 }
 
-function openInChrome() {
-  if (!editingBinding?.bookmarkId) return;
-  chrome.tabs.create({
-    url: `chrome://bookmarks/?id=${editingBinding.bookmarkId}`,
-  });
-  dispatchClose();
-}
+
 
 function openSettings() {
   chrome.runtime.openOptionsPage();
@@ -773,29 +928,179 @@ function onKeyCaptureKeydown(e) {
   $editKeyCapture.value = keyToLabel(capturedKey);
   capturingKey = false;
 
-  // Check for conflict immediately
-  const conflict = allHotkeys.find(
-    (h) => h.id !== editingBinding?.id &&
-           h.key?.code === capturedKey.code &&
-           !!h.key?.shift === !!capturedKey.shift &&
-           (h.parentFolderId ?? null) === (editingBinding?.parentFolderId ?? null)
-  );
-  $conflictWarning.textContent = conflict ? `⚠ Conflict with "${conflict.title}"` : '';
+  checkConflict();
+}
+
+let activeDropdown = null;
+let activeDropdownCleanup = null;
+
+function closeDropdown() {
+  if (activeDropdown) {
+    activeDropdown.remove();
+    activeDropdown = null;
+  }
+  if (activeDropdownCleanup) {
+    activeDropdownCleanup();
+    activeDropdownCleanup = null;
+  }
+}
+
+function openDropdownMenu(e, item, btn) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  closeDropdown();
+
+  const rect = btn.getBoundingClientRect();
+  const dropdown = document.createElement('div');
+  dropdown.className = 'loki-dropdown-menu';
+
+  // Open options: New Tab, Current Tab, New Window
+  if (item.url) {
+    const newTab = document.createElement('div');
+    newTab.className = 'loki-dropdown-item';
+    newTab.textContent = 'Open in New Tab';
+    newTab.addEventListener('mousedown', (evt) => {
+      evt.stopPropagation();
+      handleOpenBookmark({ url: item.url, openIn: 'new_tab' });
+      closeDropdown();
+      dispatchClose();
+    });
+    dropdown.appendChild(newTab);
+
+    const currentTab = document.createElement('div');
+    currentTab.className = 'loki-dropdown-item';
+    currentTab.textContent = 'Open in Current Tab';
+    currentTab.addEventListener('mousedown', (evt) => {
+      evt.stopPropagation();
+      handleOpenBookmark({ url: item.url, openIn: 'current_tab' });
+      closeDropdown();
+      dispatchClose();
+    });
+    dropdown.appendChild(currentTab);
+
+    const newWindow = document.createElement('div');
+    newWindow.className = 'loki-dropdown-item';
+    newWindow.textContent = 'Open in New Window';
+    newWindow.addEventListener('mousedown', (evt) => {
+      evt.stopPropagation();
+      handleOpenBookmark({ url: item.url, openIn: 'new_window' });
+      closeDropdown();
+      dispatchClose();
+    });
+    dropdown.appendChild(newWindow);
+
+    // Divider line
+    const divider = document.createElement('div');
+    divider.className = 'loki-dropdown-divider';
+    dropdown.appendChild(divider);
+  }
+
+  // Edit / Assign option
+  const editOpt = document.createElement('div');
+  editOpt.className = 'loki-dropdown-item';
+  editOpt.textContent = (item._searchResult && !item.existingBinding) ? 'Assign Hotkey' : 'Edit Bookmark';
+  editOpt.addEventListener('mousedown', (evt) => {
+    evt.stopPropagation();
+    closeDropdown();
+    openEditPanel(item.existingBinding ?? item);
+  });
+  dropdown.appendChild(editOpt);
+
+  // Copy Option
+  const copyOpt = document.createElement('div');
+  copyOpt.className = 'loki-dropdown-item';
+  copyOpt.textContent = item.isFolder ? 'Copy Folder' : 'Copy Bookmark';
+  copyOpt.addEventListener('mousedown', (evt) => {
+    evt.stopPropagation();
+    if (!item.bookmarkId) return;
+    chrome.bookmarks.get(item.bookmarkId, (results) => {
+      const node = results?.[0];
+      if (!node) return;
+      cloneBookmarkNode(node, node.parentId, true, () => {
+        closeDropdown();
+        if (mode === 'search') {
+          enterSearchMode();
+        } else {
+          renderHotkeyMode();
+        }
+      });
+    });
+  });
+  dropdown.appendChild(copyOpt);
+
+  // Remove option (only if it has a hotkey)
+  const isBinding = !item._searchResult || item.existingBinding;
+  if (isBinding) {
+    const removeOpt = document.createElement('div');
+    removeOpt.className = 'loki-dropdown-item danger';
+    removeOpt.textContent = 'Clear Hotkey';
+    removeOpt.addEventListener('mousedown', (evt) => {
+      evt.stopPropagation();
+      closeDropdown();
+      removeHotkeyBinding(item.id);
+    });
+    dropdown.appendChild(removeOpt);
+  }
+
+  // Position and append
+  dropdown.style.position = 'absolute';
+  dropdown.style.zIndex = '99999';
+  
+  // Right-aligned
+  dropdown.style.right = `${600 - rect.right - 6}px`;
+
+  const spaceBelow = 400 - rect.bottom;
+  if (spaceBelow < 180) {
+    dropdown.style.bottom = `${400 - rect.top + 4}px`;
+  } else {
+    dropdown.style.top = `${rect.bottom + 4}px`;
+  }
+
+  const backdrop = document.getElementById('loki-backdrop');
+  if (backdrop) {
+    backdrop.appendChild(dropdown);
+  } else {
+    document.body.appendChild(dropdown);
+  }
+  activeDropdown = dropdown;
+
+  const onOutsideClick = (evt) => {
+    if (activeDropdown && !activeDropdown.contains(evt.target)) {
+      closeDropdown();
+    }
+  };
+
+  const onScroll = () => {
+    closeDropdown();
+  };
+
+  // Add click-outside and scroll listeners to auto-dismiss
+  setTimeout(() => {
+    document.addEventListener('mousedown', onOutsideClick);
+    $results.addEventListener('scroll', onScroll);
+    activeDropdownCleanup = () => {
+      document.removeEventListener('mousedown', onOutsideClick);
+      $results.removeEventListener('scroll', onScroll);
+    };
+  }, 0);
 }
 
 /* ─── Utilities ──────────────────────────────────────────────────────────── */
 function keyToLabel(key) {
+  if (!key) return '';
   const isMac = navigator.platform.toLowerCase().includes('mac');
   const parts = [];
   if (key.ctrl) parts.push(isMac ? '⌃' : 'Ctrl+');
   if (key.alt) parts.push(isMac ? '⌥' : 'Alt+');
   if (key.shift) parts.push(isMac ? '⇧' : 'Shift+');
   if (key.meta) parts.push(isMac ? '⌘' : 'Win+');
-  parts.push(codeToLabel(key.code));
+  if (key.code) parts.push(codeToLabel(key.code));
   return parts.join('');
 }
 
 function codeToLabel(code) {
+  if (!code || typeof code !== 'string') return '';
   if (code.startsWith('Key')) return code.slice(3);
   if (code.startsWith('Digit')) return code.slice(5);
   if (/^F([1-9]|1[0-2])$/.test(code)) return code;
@@ -813,6 +1118,149 @@ function generateId() {
 
 function dispatchClose() {
   window.close();
+}
+
+function cloneBookmarkNode(node, targetParentId, isRoot, callback) {
+  const newTitle = isRoot ? `${node.title || 'Untitled'} (copy)` : (node.title || 'Untitled');
+  if (!node.url) {
+    // Folder
+    chrome.bookmarks.create({
+      parentId: targetParentId,
+      title: newTitle
+    }, (newFolder) => {
+      chrome.bookmarks.getChildren(node.id, (children) => {
+        if (!children || children.length === 0) {
+          if (callback) callback();
+          return;
+        }
+        let remaining = children.length;
+        children.forEach((child) => {
+          cloneBookmarkNode(child, newFolder.id, false, () => {
+            remaining--;
+            if (remaining === 0 && callback) callback();
+          });
+        });
+      });
+    });
+  } else {
+    // Bookmark
+    chrome.bookmarks.create({
+      parentId: targetParentId,
+      title: newTitle,
+      url: node.url
+    }, () => {
+      if (callback) callback();
+    });
+  }
+}
+
+function checkConflict() {
+  if (!capturedKey) {
+    $conflictWarning.textContent = '';
+    $conflictWarning.style.display = 'none';
+    return;
+  }
+  const matches = allHotkeys.filter(
+    (h) => h.id !== editingBinding?.id &&
+           h.key?.code === capturedKey.code &&
+           !!h.key?.shift === !!capturedKey.shift &&
+           (h.parentFolderId ?? null) === (editingBinding?.parentFolderId ?? null)
+  );
+  if (matches.length > 0) {
+    const count = matches.length;
+    const names = matches.map((m) => `"${m.title}"`).join(', ');
+    $conflictWarning.textContent = `⚠ In use by ${count} other${count > 1 ? 's' : ''} (${names})`;
+    $conflictWarning.style.display = 'block';
+  } else {
+    $conflictWarning.textContent = '';
+    $conflictWarning.style.display = 'none';
+  }
+}
+
+function getRecommendedKey(title) {
+  if (!title) return null;
+  const words = title.split(/\s+/).map(w => w.replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean);
+  const candidates = words.slice(0, 5).map(w => w[0].toUpperCase());
+  
+  for (const char of candidates) {
+    let code = '';
+    if (/[A-Z]/.test(char)) {
+      code = `Key${char}`;
+    } else if (/[0-9]/.test(char)) {
+      code = `Digit${char}`;
+    } else {
+      continue;
+    }
+    
+    // Check if this code is already in use (without Shift)
+    const inUse = allHotkeys.some((h) => h.key?.code === code && !h.key?.shift);
+    if (!inUse) {
+      return { code, shift: false, ctrl: false, alt: false, meta: false };
+    }
+  }
+  
+  if (candidates.length > 0) {
+    const char = candidates[0];
+    if (/[A-Z]/.test(char)) return { code: `Key${char}`, shift: false, ctrl: false, alt: false, meta: false };
+    if (/[0-9]/.test(char)) return { code: `Digit${char}`, shift: false, ctrl: false, alt: false, meta: false };
+  }
+  return null;
+}
+
+async function setupHotkeyForCurrentPage() {
+  if (editingBinding) return; // Edit panel already open
+
+  chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+    const activeTab = tabs?.[0];
+    if (!activeTab || !activeTab.url) return;
+
+    chrome.bookmarks.search({ url: activeTab.url }, (results) => {
+      const existingBookmark = results?.[0];
+      const existingBinding = existingBookmark ? allHotkeys.find((h) => h.bookmarkId === existingBookmark.id) : null;
+
+      const binding = {
+        ...(existingBinding ?? {}),
+        bookmarkId: existingBookmark ? existingBookmark.id : null,
+        title: existingBinding ? existingBinding.title : (existingBookmark ? existingBookmark.title : activeTab.title),
+        url: activeTab.url,
+        key: existingBinding ? existingBinding.key : null,
+        openIn: existingBinding ? existingBinding.openIn : 'new_tab',
+      };
+
+      openEditPanel(binding);
+    });
+  });
+}
+
+function findHotkeyMatches(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return [];
+
+  const currentFolder = folderStack[folderStack.length - 1] ?? null;
+  const scope = currentFolder
+    ? allHotkeys.filter((h) => h.parentFolderId === currentFolder.bookmarkId)
+    : allHotkeys.filter((h) => !h.parentFolderId);
+
+  return scope.filter((h) => {
+    if (!h.key) return false;
+    return e.code === h.key.code && !!e.shiftKey === !!h.key.shift;
+  });
+}
+
+function activateMultipleItems(items) {
+  if (items.length === 0) return;
+  if (items.length === 1) {
+    activateItem(items[0]);
+    return;
+  }
+  items.forEach((item) => {
+    if (item.isFolder) {
+      handleFolderActivation(item);
+    } else {
+      const binding = item.existingBinding ?? item;
+      handleOpenBookmark(binding);
+    }
+  });
+  dispatchClose();
 }
 
 // Automatically initialize Loki command palette once the document is loaded

@@ -15,23 +15,23 @@
       --surface: #F5EFE0;
       --surface-hover: #EDE3CF;
       --border: #DDD3BC;
-      --border-focus: #C4873B;
-      --accent: #C4873B;
-      --accent-hover: #A96F28;
+      --border-focus: #8C5A3C;
+      --accent: #8C5A3C;
+      --accent-hover: #70442B;
       --accent-text: #fff;
       --text-primary: #2C2416;
-      --text-secondary: #7A6D5A;
+      --text-secondary: #58634B;
       --text-muted: #A89880;
       --badge-bg: #EDE3CF;
-      --badge-text: #5A4020;
+      --badge-text: #8C5A3C;
       --badge-border: #D4B896;
       --input-bg: #fff;
       --danger: #B85050;
       --danger-hover: #9A3838;
       --success: #5A8A5A;
-      --radius: 12px;
-      --radius-sm: 8px;
-      --radius-xs: 5px;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
       --sidebar-w: 220px;
       --font: 'Inter', -apple-system, sans-serif;
       --transition: 0.15s ease;
@@ -43,14 +43,14 @@
         --surface: #2A2720;
         --surface-hover: #332F28;
         --border: #3D3A34;
-        --accent: #D4975A;
-        --accent-hover: #E8AA70;
+        --accent: #D4A373;
+        --accent-hover: #E3B68A;
         --accent-text: #1C1A17;
-        --text-primary: #F0EAD8;
-        --text-secondary: #9A907E;
+        --text-primary: #F5EBE0;
+        --text-secondary: #A3B18A;
         --text-muted: #6A6050;
         --badge-bg: #332F28;
-        --badge-text: #D4975A;
+        --badge-text: #D4A373;
         --badge-border: #4A4538;
         --input-bg: #232018;
         --danger: #D47070;
@@ -602,6 +602,16 @@
           <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
             <button class="btn" id="leader-reset-btn">Reset to Default</button>
             <button class="btn primary" id="leader-save-btn">Save</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-title">Global Extension Shortcut</div>
+          <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+            Google Chrome manages extension wake shortcuts globally to prevent key conflicts. Click below to open Chrome's keyboard shortcuts manager, find <strong>Loki — Bookmark Hotkeys</strong>, and assign your preferred shortcut combo.
+          </p>
+          <div style="display:flex; justify-content:flex-end;">
+            <button class="btn primary" id="open-chrome-shortcuts-btn">Configure Chrome Shortcut ↗</button>
           </div>
         </div>
       </section>

@@ -464,6 +464,11 @@ function setupLeaderKeyCapture() {
     await chrome.storage.sync.set({ settings });
     showToast('Reset to default');
   });
+
+  const shortcutsBtn = document.getElementById('open-chrome-shortcuts-btn');
+  shortcutsBtn.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+  });
 }
 
 /* ─── Domain Blocklist ───────────────────────────────────────────────────── */

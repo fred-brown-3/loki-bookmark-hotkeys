@@ -19,7 +19,7 @@
           autocorrect="off"
           autocapitalize="off"
           spellcheck="false"
-          placeholder="Press a hotkey or type to search bookmarks…"
+          placeholder="Press a hotkey or press spacebar to search"
           aria-label="Search bookmarks"
           aria-autocomplete="list"
           aria-controls="loki-results"
@@ -45,6 +45,29 @@
       <!-- Inline Edit Panel -->
       <div id="loki-edit-panel" role="form" aria-label="Edit bookmark">
         <div class="loki-edit-title" id="loki-edit-panel-title">Edit Bookmark</div>
+        
+        <!-- Double Row (Hotkey + Open In) -->
+        <div class="loki-edit-double-row">
+          <div class="loki-edit-row" style="flex: 1;">
+            <span class="loki-edit-label">Hotkey</span>
+            <div style="display: flex; gap: 4px; flex: 1; min-width: 0;">
+              <input class="loki-edit-input key-capture" id="loki-edit-key" type="text"
+                     readonly placeholder="Click to capture key…" aria-label="Press keys to capture shortcut" style="flex: 1; min-width: 0;" />
+              <button class="loki-btn" id="loki-edit-clear-key-btn" title="Clear hotkey" type="button" style="padding: 6px 8px;">Clear</button>
+            </div>
+          </div>
+          <div class="loki-edit-row" style="flex: 1;">
+            <span class="loki-edit-label">Open in</span>
+            <select class="loki-edit-select" id="loki-edit-open-in" aria-label="Open bookmark in">
+              <option value="new_tab">New Tab</option>
+              <option value="current_tab">Current Tab</option>
+              <option value="new_window">New Window</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="loki-conflict-warning" class="loki-conflict-warning" role="alert"></div>
+
         <div class="loki-edit-row">
           <span class="loki-edit-label">Title</span>
           <input class="loki-edit-input" id="loki-edit-title" type="text" placeholder="Bookmark title" />
@@ -52,20 +75,6 @@
         <div class="loki-edit-row">
           <span class="loki-edit-label">URL</span>
           <input class="loki-edit-input" id="loki-edit-url" type="url" placeholder="https://…" />
-        </div>
-        <div class="loki-edit-row">
-          <span class="loki-edit-label">Hotkey</span>
-          <input class="loki-edit-input key-capture" id="loki-edit-key" type="text"
-                 readonly placeholder="Click to capture key…" aria-label="Press keys to capture shortcut" />
-        </div>
-        <div id="loki-conflict-warning" class="loki-conflict-warning" role="alert"></div>
-        <div class="loki-edit-row">
-          <span class="loki-edit-label">Open in</span>
-          <select class="loki-edit-select" id="loki-edit-open-in" aria-label="Open bookmark in">
-            <option value="new_tab">New Tab</option>
-            <option value="current_tab">Current Tab</option>
-            <option value="new_window">New Window</option>
-          </select>
         </div>
         <div class="loki-edit-row" id="loki-edit-folder-row" style="display:none">
           <span class="loki-edit-label">Folders</span>
@@ -76,9 +85,8 @@
           </select>
         </div>
         <div class="loki-edit-actions">
-          <button class="loki-btn" id="loki-edit-chrome-btn" title="Open in Chrome Bookmark Manager">
-            Open in Chrome ↗
-          </button>
+          <button class="loki-btn danger" id="loki-edit-delete-bookmark-btn" title="Delete bookmark from Chrome" type="button">Delete Bookmark</button>
+          <div style="flex: 1;"></div>
           <button class="loki-btn" id="loki-edit-cancel">Cancel</button>
           <button class="loki-btn primary" id="loki-edit-save">Save</button>
         </div>
@@ -89,13 +97,16 @@
         <span class="loki-hint">
           <kbd class="loki-hint-key">↑↓</kbd> navigate
         </span>
-        <span class="loki-hint">
+        <span class="loki-hint clickable" id="loki-hint-bookmark" role="button" title="Bookmark current page (Shift+Space)">
+          <kbd class="loki-hint-key">⇧Space</kbd> bookmark page
+        </span>
+        <span class="loki-hint clickable" id="loki-hint-open" role="button" title="Open selected item (Enter)">
           <kbd class="loki-hint-key">↵</kbd> open
         </span>
-        <span class="loki-hint">
-          <kbd class="loki-hint-key">E</kbd> edit
+        <span class="loki-hint clickable" id="loki-hint-edit" role="button" title="Edit selected item (Shift+Enter)">
+          <kbd class="loki-hint-key">⇧↵</kbd> edit
         </span>
-        <span class="loki-hint">
+        <span class="loki-hint clickable" id="loki-hint-close" role="button" title="Close Loki (Esc)">
           <kbd class="loki-hint-key">Esc</kbd> close
         </span>
       </div>
