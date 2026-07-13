@@ -1,49 +1,85 @@
-# 🐾 Loki — Bookmark Hotkeys
+<p align="center">
+  <img src="icons/loki-128.png" width="100" height="100" alt="Loki — Bookmark Hotkeys" />
+</p>
 
-A Chrome extension (Manifest V3) that provides a Raycast-style command palette for instantly navigating to bookmarks via user-assigned keyboard shortcuts.
+<h1 align="center">Loki — Bookmark Hotkeys</h1>
 
-Press **Cmd+Shift+L** (Mac) / **Ctrl+Shift+L** (Win/Linux) to open the palette popup, then press a bound key to jump to a bookmark.
+<p align="center">
+  <strong>A Raycast-style command palette for your Chrome bookmarks.</strong><br/>
+  Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>L</kbd> to open, hit a hotkey, and you're there.
+</p>
 
----
-
-## Table of Contents
-
-- [Installation](#installation)
-- [Features](#features)
-- [Architecture](#architecture)
-- [File Structure](#file-structure)
-- [How the Keyboard Shortcut Works](#how-the-keyboard-shortcut-works)
-- [Data Model](#data-model)
-- [Chrome APIs Used](#chrome-apis-used)
-- [Known Constraints](#known-constraints)
-- [Gotchas for Future Developers](#gotchas-for-future-developers)
-- [Development Workflow](#development-workflow)
-- [Design](#design)
+<p align="center">
+  <img src="https://img.shields.io/badge/manifest-v3-blue?style=flat-square" alt="Manifest V3" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License" />
+  <img src="https://img.shields.io/badge/platform-Chrome-yellow?style=flat-square" alt="Chrome" />
+</p>
 
 ---
 
-## Installation
+<!-- 📸 Replace the path below with an actual screenshot of the palette popup -->
+<!-- Tip: Open the palette (Cmd+Shift+L) and take a screenshot (Cmd+Shift+4 on Mac) -->
 
-1. Go to `chrome://extensions`
-2. Enable **Developer mode** (top right toggle)
-3. Click **Load unpacked**
-4. Select this directory
-5. Press **Cmd+Shift+L** (or click the Loki extension icon in the toolbar) to launch the palette.
-
----
-
-## Features
-
-* **Instant Current Page Bookmarking (`⇧Space`)**: Press `Shift+Space` (or click the button in the footer) to quickly create a bookmark for the current page and assign a hotkey.
-* **Auto-recommended Hotkeys**: Pre-populates empty bindings with hotkey recommendations derived from the first letter of the first 5 words in the title.
-* **Shared Hotkeys (Multi-Open)**: Map multiple bookmarks/folders to the exact same hotkey to launch them all simultaneously. Real-time conflict warnings notify you if a hotkey is already in use by other bookmarks.
-* **Clickable Footer Actions**: Footer help menu hints (navigate, bookmark page, open, edit, close, settings) are fully interactive buttons.
-* **Recursive Cloning**: Clone entire folders or individual bookmarks directly from the command palette's options menu.
-* **Danger Zone Operations**: Clear hotkeys or delete bookmarks/folders directly from the command palette.
+<p align="center">
+  <img src="screenshots/palette.png" width="600" alt="Loki command palette in action" />
+</p>
 
 ---
 
-## Architecture
+## ✨ Why Loki?
+
+| Benefit | Description |
+|---|---|
+| ⚡ **Instant navigation** | Jump to any bookmark with a single keypress — no clicking, no searching |
+| 🔎 **Built-in search** | Press `Space` to search all bookmarks when you don't remember the hotkey |
+| 📁 **Folder support** | Drill into bookmark folders, open all tabs at once, or flatten to a list |
+| 🔖 **One-click bookmarking** | Press `Shift+Space` to bookmark the current page and assign a hotkey in one step |
+| 🎨 **Beautiful UI** | Warm, Westie-inspired color palette with automatic light/dark mode |
+| 🌐 **Works everywhere** | Functions on all pages including `chrome://`, `file://`, and the Web Store |
+| 🔄 **Syncs across devices** | Hotkeys are stored in Chrome Sync — they follow you everywhere |
+| ⌨️ **Shared hotkeys** | Map multiple bookmarks to the same key to open them all simultaneously |
+
+---
+
+## 🚀 Installation
+
+1. **Download** — Clone or download this repo:
+   ```bash
+   git clone https://github.com/your-username/chrome-bookmark-hotkeys-extension.git
+   ```
+2. **Open Chrome Extensions** — Navigate to `chrome://extensions`
+3. **Enable Developer Mode** — Toggle the switch in the top-right corner
+4. **Load the extension** — Click **Load unpacked** and select this folder
+5. **Launch Loki** — Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>L</kbd> (Mac) or <kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>L</kbd> (Win/Linux)
+
+> **Tip:** Pin Loki to your toolbar for quick access via the Extensions puzzle-piece icon.
+
+---
+
+## 📖 How to Use
+
+### Hotkey Mode (default)
+Open the palette and press the assigned key to navigate instantly.
+
+| Action | Shortcut |
+|---|---|
+| Open palette | <kbd>⌘</kbd><kbd>⇧</kbd><kbd>L</kbd> |
+| Activate a hotkey | Press the assigned letter/digit |
+| Navigate list | <kbd>↑</kbd> <kbd>↓</kbd> |
+| Open selected | <kbd>Enter</kbd> |
+| Edit selected | <kbd>⇧</kbd><kbd>Enter</kbd> |
+| Bookmark current page | <kbd>⇧</kbd><kbd>Space</kbd> |
+| Close | <kbd>Esc</kbd> |
+
+### Search Mode
+Press <kbd>Space</kbd> to switch to search mode and find any bookmark by title or URL.
+
+### Settings
+Click **⚙ Settings** in the footer (or right-click the extension icon → Options) to manage hotkey assignments, view storage usage, and customize your shortcut key.
+
+---
+
+## 🏗️ Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -57,8 +93,8 @@ Press **Cmd+Shift+L** (Mac) / **Ctrl+Shift+L** (Win/Linux) to open the palette p
 │              ▼                                           │
 │  ┌─────────────────────────┐                             │
 │  │  palette/palette.html   │ Renders command palette     │
-│  │  (Action Popup Window)  │ Handles search, hotkeys, and│
-│  │  & palette.js           │ direct tab navigation APIs  │
+│  │  (Action Popup Window)  │ Handles search, hotkeys,   │
+│  │  & palette.js           │ and direct tab navigation   │
 │  └─────────────────────────┘                             │
 │                                                          │
 │  ┌────────────┐                                          │
@@ -67,144 +103,95 @@ Press **Cmd+Shift+L** (Mac) / **Ctrl+Shift+L** (Win/Linux) to open the palette p
 └──────────────────────────────────────────────────────────┘
 ```
 
+Loki uses Chrome's **`_execute_action`** command to natively open the popup — no background messaging, no content scripts, no permissions beyond what's needed. This guarantees **100% compatibility** across all pages.
+
 ---
 
-## File Structure
+## 📂 File Structure
 
 ```
 chrome-bookmark-hotkeys-extension/
-├── manifest.json           # MV3 manifest — extension definition and keyboard mapping
-├── background.js           # Service worker (currently a placeholder)
+├── manifest.json           # MV3 manifest — permissions, shortcuts, popup
+├── background.js           # Service worker (placeholder for future use)
 ├── palette/
-│   ├── palette.html        # Palette Popup HTML structure
-│   ├── palette.css         # Palette styles (Westie color theme, auto light/dark)
-│   └── palette.js          # Palette logic: hotkey matching, bookmark search, navigation
+│   ├── palette.html        # Popup HTML structure
+│   ├── palette.css         # Styles (Westie color theme, auto light/dark)
+│   └── palette.js          # Palette logic: hotkey matching, search, navigation
 ├── options/
-│   ├── options.html        # Full settings page UI
-│   └── options.js          # Hotkey manager and options page bindings
+│   ├── options.html        # Full settings page with sidebar navigation
+│   └── options.js          # Hotkey management and options page logic
 ├── shared/
-│   └── storage.js          # Storage helpers (used by options page)
+│   └── storage.js          # Storage helpers (hotkeys CRUD, settings, utilities)
 └── icons/
     ├── loki-16.png
     ├── loki-48.png
-    └── loki-128.png        # Westie terrier mascot
+    └── loki-128.png        # Westie terrier mascot 🐾
 ```
 
 ---
 
-## How the Keyboard Shortcut Works
+## 🔑 Data Model
 
-### Native Action Popup API (`_execute_action`)
+Hotkeys are stored in `chrome.storage.sync` (syncs across devices, 100 KB quota):
 
-Instead of utilizing background messaging and injected page content scripts, Loki utilizes Chrome's native Action API.
-
-```
-1. User presses Cmd+Shift+L
-2. Chrome's chrome.commands API intercepts it natively via the reserved "_execute_action" target
-3. Chrome automatically instantiates and displays the popup "palette/palette.html"
-4. The palette script "palette.js" retrieves hotkey mappings and registers keydown listeners inside the popup
-5. Selecting a bookmark triggers direct tab navigation and invokes window.close() to dismiss the popup
-```
-
-This guarantees 100% compatibility across all pages, including settings pages (`chrome://`), local files (`file://`), and the Chrome Web Store.
-
----
-
-## Data Model
-
-All data is stored in `chrome.storage.sync` (syncs across devices, 100 KB quota):
-
-```javascript
+```json
 {
   "hotkeys": [
     {
-      "id": "loki-1720000000000-abc12",   // unique ID
-      "bookmarkId": "12345",               // chrome.bookmarks node ID
-      "url": "https://...",                // cached for fast access
-      "title": "Gmail",                    // display name
+      "id": "loki-1720000000000-abc12",
+      "bookmarkId": "12345",
+      "url": "https://mail.google.com",
+      "title": "Gmail",
       "isFolder": false,
-      "folderBehavior": null,              // "drill_in" | "flat_list" | "open_all"
-      "key": {
-        "code": "KeyG",                   // KeyboardEvent.code
-        "shift": false,                   // only Shift modifier allowed inside palette
-        "ctrl": false, "alt": false, "meta": false
-      },
-      "openIn": "new_tab"                 // "new_tab" | "current_tab" | "new_window"
+      "folderBehavior": null,
+      "key": { "code": "KeyG", "shift": false },
+      "openIn": "new_tab"
     }
-  ],
-  "settings": {
-    "enabled": true,
-    "theme": "auto"
-  }
+  ]
 }
 ```
 
 ---
 
-## Chrome APIs Used
-
-| API | Where | Purpose |
-|---|---|---|
-| `chrome.bookmarks.search()` | palette.js, options.js | Substring search for bookmarks |
-| `chrome.bookmarks.create()` | palette.js, options.js | Creates native bookmarks for page bookmarking and cloning |
-| `chrome.bookmarks.update()` | palette.js, options.js | Inline editing of bookmark title/URL |
-| `chrome.bookmarks.removeTree()` | palette.js | Recursive removal of bookmarks and folders from Chrome |
-| `chrome.bookmarks.getTree()` | options.js | Full bookmark tree for settings page |
-| `chrome.commands.getAll()` | options.js | Queries global Chrome shortcuts dynamically |
-| `chrome.storage.sync.get/set` | everywhere | Persist hotkey bindings + settings |
-| `chrome.storage.onChanged` | palette.js, options.js | Live-reload bindings without page refresh |
-| `chrome.tabs.create()` | palette.js | Open bookmark in a new tab |
-| `chrome.tabs.update()` | palette.js | Navigate active tab |
-| `chrome.windows.create()` | palette.js | Open bookmark in new window |
-| `chrome.runtime.openOptionsPage()` | palette.js | Open settings page |
-
----
-
-## Known Constraints
-
-| Constraint | Details |
-|---|---|
-| **Popup Dimension Limits** | Chrome action popups are constrained to a maximum size of **800x600 pixels**. Loki's body size is set to **600x400 pixels**. |
-| **`file://` URLs** | Require explicit user opt-in in Chrome's extension settings ("Allow access to file URLs"). |
-| **`storage.sync` quota** | 100 KB total. Each binding is ~200 bytes, supporting ~500 bookmarks. |
-
----
-
-## Gotchas for Future Developers
-
-### 1. Sizing
-Chrome popups dynamically resize to content if size isn't explicitly defined, which looks jarring. Always set explicit `width` and `height` on the `body` element in `palette.css`.
-
-### 2. Autofocus
-Ensure the search `<input>` element has the `autofocus` attribute in `palette.html` so users can type immediately upon opening.
-
-### 3. Window Closing
-Navigating via `chrome.tabs` APIs does not always dismiss the action popup natively. Be sure to call `window.close()` directly after initiating navigation in `palette.js`.
-
----
-
-## Development Workflow
+## 🛠️ Development
 
 1. Edit files in this directory
 2. Go to `chrome://extensions` → click **↺ Reload** on Loki
-3. Press `Cmd+Shift+L` to inspect and test the popup.
+3. Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>L</kbd> to test the popup
+
+No build step required — the extension runs directly from source.
 
 ---
 
-## Design
+## 📋 Chrome APIs Used
 
-### Color Palette (Westie-Inspired)
-
-| Token | Light | Dark |
-|---|---|---|
-| Background | `#FDFAF5` (warm cream) | `#1C1A17` (warm charcoal) |
-| Surface | `#F5EFE0` (linen) | `#2A2720` |
-| Accent | `#C4873B` (warm amber) | `#D4975A` |
-| Text | `#2C2416` | `#F0EAD8` |
-| Key badge | `#EDE3CF` | `#332F28` |
+| API | Purpose |
+|---|---|
+| `chrome.bookmarks` | Search, create, update, remove bookmarks & folders |
+| `chrome.commands` | Global keyboard shortcut (`_execute_action`) |
+| `chrome.storage.sync` | Persist hotkeys & settings across devices |
+| `chrome.tabs` | Open/navigate tabs |
+| `chrome.windows` | Open bookmarks in new windows |
+| `chrome.runtime` | Open options page, read manifest version |
 
 ---
 
-## License
+## ⚠️ Known Constraints
 
-MIT
+| Constraint | Details |
+|---|---|
+| **Popup size** | Chrome limits action popups to **800×600px**. Loki uses **600×400px**. |
+| **`file://` URLs** | Requires user opt-in: Extensions → Loki → "Allow access to file URLs" |
+| **Storage quota** | `chrome.storage.sync` has a 100 KB limit (~500 hotkeys at ~200 bytes each) |
+
+---
+
+## 📄 License
+
+[MIT](LICENSE)
+
+---
+
+<p align="center">
+  Built with 🐾 by a Westie and his human
+</p>

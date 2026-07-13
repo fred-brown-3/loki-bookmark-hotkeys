@@ -1,10 +1,8 @@
 /**
  * palette/palette.js — Loki Command Palette Logic
  *
- * Wrapped in an IIFE so internal variables don't collide with content.js globals.
- * Only initPalette() is exposed on globalThis for content.js to call.
- *
- * Communication: sends messages to background.js via chrome.runtime.sendMessage().
+ * Runs inside the Chrome Action Popup (palette.html).
+ * Wrapped in an IIFE to keep all variables scoped.
  */
 
 (function () { // ← IIFE start — keeps all vars scoped
@@ -124,7 +122,7 @@ function attachEventListeners() {
     openSettings();
   });
 
-  // Edit form — use shadow root refs (document.getElementById won't find shadow DOM elements)
+  // Edit form event listeners
   $editKeyCapture.addEventListener('click', startKeyCapture);
   $editKeyCapture.addEventListener('keydown', onKeyCaptureKeydown);
   $editKeyCapture.addEventListener('blur', stopKeyCapture);

@@ -1,5 +1,5 @@
 /* palette/palette.css — Loki Command Palette Styles
- * Scoped inside Shadow DOM — no risk of host page conflicts.
+ * Runs inside the Chrome Action Popup window.
  * Westie-inspired: warm creams, linen, amber accents.
  * Auto light/dark via prefers-color-scheme.
  */
