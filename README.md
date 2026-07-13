@@ -9,6 +9,7 @@ Press **Cmd+Shift+L** (Mac) / **Ctrl+Shift+L** (Win/Linux) to open the palette p
 ## Table of Contents
 
 - [Installation](#installation)
+- [Features](#features)
 - [Architecture](#architecture)
 - [File Structure](#file-structure)
 - [How the Keyboard Shortcut Works](#how-the-keyboard-shortcut-works)
@@ -28,6 +29,17 @@ Press **Cmd+Shift+L** (Mac) / **Ctrl+Shift+L** (Win/Linux) to open the palette p
 3. Click **Load unpacked**
 4. Select this directory
 5. Press **Cmd+Shift+L** (or click the Loki extension icon in the toolbar) to launch the palette.
+
+---
+
+## Features
+
+* **Instant Current Page Bookmarking (`⇧Space`)**: Press `Shift+Space` (or click the button in the footer) to quickly create a bookmark for the current page and assign a hotkey.
+* **Auto-recommended Hotkeys**: Pre-populates empty bindings with hotkey recommendations derived from the first letter of the first 5 words in the title.
+* **Shared Hotkeys (Multi-Open)**: Map multiple bookmarks/folders to the exact same hotkey to launch them all simultaneously. Real-time conflict warnings notify you if a hotkey is already in use by other bookmarks.
+* **Clickable Footer Actions**: Footer help menu hints (navigate, bookmark page, open, edit, close, settings) are fully interactive buttons.
+* **Recursive Cloning**: Clone entire folders or individual bookmarks directly from the command palette's options menu.
+* **Danger Zone Operations**: Clear hotkeys or delete bookmarks/folders directly from the command palette.
 
 ---
 
@@ -69,7 +81,7 @@ chrome-bookmark-hotkeys-extension/
 │   └── palette.js          # Palette logic: hotkey matching, bookmark search, navigation
 ├── options/
 │   ├── options.html        # Full settings page UI
-│   └── options.js          # Hotkey manager, leader key config, domain blocklist
+│   └── options.js          # Hotkey manager and options page bindings
 ├── shared/
 │   └── storage.js          # Storage helpers (used by options page)
 └── icons/
@@ -121,9 +133,7 @@ All data is stored in `chrome.storage.sync` (syncs across devices, 100 KB quota)
     }
   ],
   "settings": {
-    "leaderKey": { "ctrl": false, "alt": false, "shift": true, "meta": true, "code": "KeyL" },
     "enabled": true,
-    "blockedDomains": ["notion.so", "docs.google.com"],
     "theme": "auto"
   }
 }
@@ -136,8 +146,11 @@ All data is stored in `chrome.storage.sync` (syncs across devices, 100 KB quota)
 | API | Where | Purpose |
 |---|---|---|
 | `chrome.bookmarks.search()` | palette.js, options.js | Substring search for bookmarks |
+| `chrome.bookmarks.create()` | palette.js, options.js | Creates native bookmarks for page bookmarking and cloning |
 | `chrome.bookmarks.update()` | palette.js, options.js | Inline editing of bookmark title/URL |
+| `chrome.bookmarks.removeTree()` | palette.js | Recursive removal of bookmarks and folders from Chrome |
 | `chrome.bookmarks.getTree()` | options.js | Full bookmark tree for settings page |
+| `chrome.commands.getAll()` | options.js | Queries global Chrome shortcuts dynamically |
 | `chrome.storage.sync.get/set` | everywhere | Persist hotkey bindings + settings |
 | `chrome.storage.onChanged` | palette.js, options.js | Live-reload bindings without page refresh |
 | `chrome.tabs.create()` | palette.js | Open bookmark in a new tab |
