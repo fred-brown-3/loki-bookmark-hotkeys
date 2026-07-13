@@ -39,6 +39,18 @@ async function init() {
   // About version
   const manifest = chrome.runtime.getManifest();
   document.getElementById('about-version').textContent = `Version ${manifest.version}`;
+
+  // Handle blockDomain query param
+  const params = new URLSearchParams(window.location.search);
+  const blockDomain = params.get('blockDomain');
+  if (blockDomain) {
+    activateSection('domains');
+    const input = document.getElementById('domain-input');
+    if (input) {
+      input.value = blockDomain;
+      input.focus();
+    }
+  }
 }
 
 /* ─── Navigation ─────────────────────────────────────────────────────────── */

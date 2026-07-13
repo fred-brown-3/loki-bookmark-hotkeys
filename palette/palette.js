@@ -18,6 +18,8 @@ let activeIndex = 0;
 let editingBinding = null; // binding being edited inline
 let folderStack = [];      // breadcrumb trail for folder drill-in
 let searchResults = [];    // current list of items rendered
+let currentTabUrl = '';
+let currentTabDomain = '';
 
 // Key capture state for the edit form
 let capturingKey = false;
@@ -40,6 +42,21 @@ function initPalette(root, hotkeys, cfg) {
 
   // Focus the search input
   $search.focus();
+
+  // Query active tab URL & domain
+  chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+    const activeTab = tabs?.[0];
+    if (activeTab && activeTab.url) {
+      currentTabUrl = activeTab.url;
+      try {
+        const urlObj = new URL(activeTab.url);
+        currentTabDomain = urlObj.hostname;
+      } catch (err) {
+        console.warn('[Loki] Could not parse tab URL:', err);
+      }
+    }
+    updateBlocklistButton();
+  });
 }
 
 function updateSearchPlaceholder() {
@@ -123,6 +140,15 @@ function attachEventListeners() {
 
   document.getElementById('loki-hint-settings')?.addEventListener('click', () => {
     openSettings();
+  });
+
+  document.getElementById('loki-hint-blocklist')?.addEventListener('click', () => {
+    if (currentTabDomain) {
+      chrome.tabs.create({
+        url: chrome.runtime.getURL(`options/options.html?blockDomain=${encodeURIComponent(currentTabDomain)}`)
+      });
+      dispatchClose();
+    }
   });
 
   // Edit form — use shadow root refs (document.getElementById won't find shadow DOM elements)
@@ -1265,6 +1291,28 @@ function activateMultipleItems(items) {
     }
   });
   dispatchClose();
+}
+
+function updateBlocklistButton() {
+  const btn = document.getElementById('loki-hint-blocklist');
+  if (!btn) return;
+
+  if (!currentTabDomain || !currentTabUrl.startsWith('http')) {
+    btn.style.display = 'none';
+    return;
+  }
+
+  btn.style.display = '';
+  const isBlocked = (settings.blockedDomains ?? []).includes(currentTabDomain);
+  if (isBlocked) {
+    btn.textContent = '🚫 Blocked';
+    btn.title = `This domain (${currentTabDomain}) is already blocked. Click to manage.`;
+    btn.classList.add('blocked');
+  } else {
+    btn.textContent = '🚫 Block Domain';
+    btn.title = `Block Loki on this domain (${currentTabDomain})`;
+    btn.classList.remove('blocked');
+  }
 }
 
 // Automatically initialize Loki command palette once the document is loaded
