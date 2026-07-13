@@ -31,26 +31,11 @@ async function init() {
   renderHotkeyList();
   renderStorageUsage();
   renderLeaderKey();
-  renderDomainList();
   setupAddForm();
   setupLeaderKeyCapture();
-  setupDomainInput();
-
   // About version
   const manifest = chrome.runtime.getManifest();
   document.getElementById('about-version').textContent = `Version ${manifest.version}`;
-
-  // Handle blockDomain query param
-  const params = new URLSearchParams(window.location.search);
-  const blockDomain = params.get('blockDomain');
-  if (blockDomain) {
-    activateSection('domains');
-    const input = document.getElementById('domain-input');
-    if (input) {
-      input.value = blockDomain;
-      input.focus();
-    }
-  }
 }
 
 /* ─── Navigation ─────────────────────────────────────────────────────────── */
@@ -483,68 +468,7 @@ function setupLeaderKeyCapture() {
   });
 }
 
-/* ─── Domain Blocklist ───────────────────────────────────────────────────── */
-function renderDomainList() {
-  const list = document.getElementById('domain-list');
-  const empty = document.getElementById('domain-empty');
-  const domains = settings.blockedDomains ?? [];
 
-  list.innerHTML = '';
-
-  if (domains.length === 0) {
-    empty.style.display = '';
-    return;
-  }
-
-  empty.style.display = 'none';
-
-  domains.forEach((domain) => {
-    const item = document.createElement('div');
-    item.className = 'domain-item';
-
-    const name = document.createElement('span');
-    name.className = 'domain-name';
-    name.textContent = domain;
-    item.appendChild(name);
-
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'btn sm danger';
-    removeBtn.textContent = 'Remove';
-    removeBtn.addEventListener('click', () => removeDomain(domain));
-    item.appendChild(removeBtn);
-
-    list.appendChild(item);
-  });
-}
-
-function setupDomainInput() {
-  const input = document.getElementById('domain-input');
-  const addBtn = document.getElementById('add-domain-btn');
-
-  addBtn.addEventListener('click', addDomain);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addDomain();
-  });
-}
-
-async function addDomain() {
-  const input = document.getElementById('domain-input');
-  const domain = input.value.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0];
-  if (!domain) return;
-
-  if (!(settings.blockedDomains ?? []).includes(domain)) {
-    settings.blockedDomains = [...(settings.blockedDomains ?? []), domain];
-    await chrome.storage.sync.set({ settings });
-    renderDomainList();
-    input.value = '';
-  }
-}
-
-async function removeDomain(domain) {
-  settings.blockedDomains = (settings.blockedDomains ?? []).filter((d) => d !== domain);
-  await chrome.storage.sync.set({ settings });
-  renderDomainList();
-}
 
 /* ─── Storage Usage ──────────────────────────────────────────────────────── */
 async function renderStorageUsage() {

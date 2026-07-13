@@ -497,9 +497,6 @@
         <button class="nav-item" data-section="leader" id="nav-leader">
           <span class="nav-icon">🎯</span> Leader Key
         </button>
-        <button class="nav-item" data-section="domains" id="nav-domains">
-          <span class="nav-icon">🌐</span> Domain Blocklist
-        </button>
         <div class="nav-section-label">System</div>
         <button class="nav-item" data-section="about" id="nav-about">
           <span class="nav-icon">🐾</span> About
@@ -616,24 +613,7 @@
         </div>
       </section>
 
-      <!-- ── Section: Domain Blocklist ── -->
-      <section class="section" id="section-domains">
-        <h1>Domain Blocklist</h1>
-        <p class="section-desc">
-          Loki is silenced on these domains — useful for apps with rich keyboard shortcuts like Notion or Google Docs.
-        </p>
 
-        <div class="card">
-          <div class="form-row">
-            <input class="form-input" id="domain-input" type="text" placeholder="e.g. notion.so or docs.google.com" style="flex:1" />
-            <button class="btn primary" id="add-domain-btn">Add</button>
-          </div>
-          <div class="domain-list" id="domain-list"></div>
-          <div id="domain-empty" style="font-size:13px; color:var(--text-muted); padding:10px 0; display:none">
-            No domains blocked. Loki is active everywhere.
-          </div>
-        </div>
-      </section>
 
       <!-- ── Section: About ── -->
       <section class="section" id="section-about">

@@ -206,15 +206,6 @@ body {
   transform: translateY(0.5px);
 }
 
-.loki-hint.clickable.blocked {
-  color: var(--danger) !important;
-}
-
-.loki-hint.clickable.blocked:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--danger) !important;
-}
-
 /* ─── Breadcrumb ─────────────────────────────────────────────────────────── */
 #loki-breadcrumb {
   display: none;
