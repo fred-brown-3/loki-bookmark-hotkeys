@@ -17,10 +17,6 @@ let addSelectedBookmark = null;
 let addCapturedKey = null;
 let addCapturing = false;
 
-// Leader key capture state
-let leaderCapturing = false;
-let leaderCaptured = null;
-
 /* ─── Init ───────────────────────────────────────────────────────────────── */
 async function init() {
   const result = await chrome.storage.sync.get(['hotkeys', 'settings']);
@@ -32,7 +28,6 @@ async function init() {
   renderStorageUsage();
   renderLeaderKey();
   setupAddForm();
-  setupLeaderKeyCapture();
   // About version
   const manifest = chrome.runtime.getManifest();
   document.getElementById('about-version').textContent = `Version ${manifest.version}`;
@@ -402,70 +397,21 @@ function openEditModal(binding) {
 
 /* ─── Leader Key Section ─────────────────────────────────────────────────── */
 function renderLeaderKey() {
-  const input = document.getElementById('leader-key-input');
-  input.value = keyToLabel(settings.leaderKey);
-  leaderCaptured = { ...settings.leaderKey };
-}
-
-function setupLeaderKeyCapture() {
-  const input = document.getElementById('leader-key-input');
-  const saveBtn = document.getElementById('leader-save-btn');
-  const resetBtn = document.getElementById('leader-reset-btn');
-
-  input.addEventListener('click', () => {
-    leaderCapturing = true;
-    input.value = 'Press your desired combination…';
-  });
-
-  input.addEventListener('blur', () => {
-    leaderCapturing = false;
-    if (!leaderCaptured) input.value = '';
-  });
-
-  input.addEventListener('keydown', (e) => {
-    if (!leaderCapturing) return;
-    e.preventDefault();
-    if (['CapsLock'].includes(e.key)) return;
-    // Must have at least one modifier
-    if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
-      document.getElementById('leader-conflict-msg').textContent = '⚠ Must include at least one modifier (Ctrl, Cmd, Alt, or Shift)';
-      document.getElementById('leader-conflict-msg').style.display = '';
-      return;
+  chrome.commands.getAll((commands) => {
+    const actionCmd = commands.find((c) => c.name === '_execute_action');
+    const label = document.getElementById('current-shortcut-label');
+    if (label) {
+      label.textContent = (actionCmd && actionCmd.shortcut) ? actionCmd.shortcut : 'Not set';
     }
-    if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
-
-    leaderCaptured = {
-      ctrl: e.ctrlKey,
-      alt: e.altKey,
-      shift: e.shiftKey,
-      meta: e.metaKey,
-      code: e.code,
-    };
-    input.value = keyToLabel(leaderCaptured);
-    leaderCapturing = false;
-    document.getElementById('leader-conflict-msg').style.display = 'none';
-  });
-
-  saveBtn.addEventListener('click', async () => {
-    if (!leaderCaptured) return;
-    settings.leaderKey = leaderCaptured;
-    await chrome.storage.sync.set({ settings });
-    renderLeaderKey();
-    showToast('Leader key saved!');
-  });
-
-  resetBtn.addEventListener('click', async () => {
-    leaderCaptured = DEFAULT_SETTINGS.leaderKey;
-    renderLeaderKey();
-    settings.leaderKey = leaderCaptured;
-    await chrome.storage.sync.set({ settings });
-    showToast('Reset to default');
   });
 
   const shortcutsBtn = document.getElementById('open-chrome-shortcuts-btn');
-  shortcutsBtn.addEventListener('click', () => {
-    chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
-  });
+  if (shortcutsBtn && !shortcutsBtn.hasAttribute('data-bound')) {
+    shortcutsBtn.setAttribute('data-bound', 'true');
+    shortcutsBtn.addEventListener('click', () => {
+      chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+    });
+  }
 }
 
 

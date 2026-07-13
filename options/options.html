@@ -495,7 +495,7 @@
           <span class="nav-icon">⌨️</span> Hotkeys
         </button>
         <button class="nav-item" data-section="leader" id="nav-leader">
-          <span class="nav-icon">🎯</span> Leader Key
+          <span class="nav-icon">🎯</span> Shortcut
         </button>
         <div class="nav-section-label">System</div>
         <button class="nav-item" data-section="about" id="nav-about">
@@ -583,29 +583,25 @@
         </div>
       </section>
 
-      <!-- ── Section: Leader Key ── -->
+      <!-- ── Section: Keyboard Shortcut ── -->
       <section class="section" id="section-leader">
-        <h1>Leader Key</h1>
+        <h1>Keyboard Shortcut</h1>
         <p class="section-desc">
-          The leader key is the shortcut that opens the Loki palette. Default: <strong>⌘⇧L</strong> on Mac / <strong>Win+Shift+L</strong> on Windows.
+          Loki is launched globally via a Chrome extension shortcut.
         </p>
 
         <div class="card">
-          <div class="form-row">
-            <span class="form-label">Leader key</span>
-            <input class="form-input key-capture-input" id="leader-key-input" type="text" readonly placeholder="Click to set…" />
-          </div>
-          <div id="leader-conflict-msg" class="conflict-msg" style="display:none"></div>
-          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
-            <button class="btn" id="leader-reset-btn">Reset to Default</button>
-            <button class="btn primary" id="leader-save-btn">Save</button>
+          <div class="form-row" style="align-items: center; justify-content: space-between;">
+            <span class="form-label" style="font-weight: 600;">Current Shortcut</span>
+            <span id="current-shortcut-label" style="font-size: 15px; font-weight: 700; background: var(--bg-hover); padding: 4px 10px; border-radius: 6px; letter-spacing: 0.05em;">Cmd+Shift+L</span>
           </div>
         </div>
 
         <div class="card" style="margin-top: 24px;">
-          <div class="card-title">Global Extension Shortcut</div>
+          <div class="card-title">How to Customize Your Shortcut</div>
           <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
-            Google Chrome manages extension wake shortcuts globally to prevent key conflicts. Click below to open Chrome's keyboard shortcuts manager, find <strong>Loki — Bookmark Hotkeys</strong>, and assign your preferred shortcut combo.
+            Google Chrome manages extension activation shortcuts centrally to prevent key conflicts with other apps or website pages. 
+            Click below to open Chrome's Keyboard Shortcuts manager, find <strong>Loki — Bookmark Hotkeys</strong>, and click the edit pencil icon to assign your new shortcut combination.
           </p>
           <div style="display:flex; justify-content:flex-end;">
             <button class="btn primary" id="open-chrome-shortcuts-btn">Configure Chrome Shortcut ↗</button>
