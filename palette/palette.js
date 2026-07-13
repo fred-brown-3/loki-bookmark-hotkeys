@@ -121,6 +121,10 @@ function attachEventListeners() {
     dispatchClose();
   });
 
+  document.getElementById('loki-hint-settings')?.addEventListener('click', () => {
+    openSettings();
+  });
+
   // Edit form — use shadow root refs (document.getElementById won't find shadow DOM elements)
   $editKeyCapture.addEventListener('click', startKeyCapture);
   $editKeyCapture.addEventListener('keydown', onKeyCaptureKeydown);

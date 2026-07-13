@@ -601,10 +601,16 @@ body {
   padding: 7px 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
   font-size: 11px;
   color: var(--text-muted);
   background: var(--surface);
+}
+
+#loki-footer-hints {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .loki-hint {
