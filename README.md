@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/manifest-v3-blue?style=flat-square" alt="Manifest V3" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License" />
   <img src="https://img.shields.io/badge/platform-Chrome-yellow?style=flat-square" alt="Chrome" />
+  <a href="PRIVACY_POLICY.md"><img src="https://img.shields.io/badge/privacy-policy-blueviolet?style=flat-square" alt="Privacy Policy" /></a>
 </p>
 
 ---
@@ -41,18 +42,24 @@
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation & Setup
 
-1. **Download** — Clone or download this repo:
-   ```bash
-   git clone https://github.com/your-username/chrome-bookmark-hotkeys-extension.git
-   ```
-2. **Open Chrome Extensions** — Navigate to `chrome://extensions`
-3. **Enable Developer Mode** — Toggle the switch in the top-right corner
-4. **Load the extension** — Click **Load unpacked** and select this folder
-5. **Launch Loki** — Press <kbd>⌘</kbd><kbd>⇧</kbd><kbd>L</kbd> (Mac) or <kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>L</kbd> (Win/Linux)
+### Google Chrome
+1. **Clone or download** this repository to your local machine.
+2. Open Chrome and navigate to `chrome://extensions/`.
+3. In the top-right corner, turn on **Developer mode** using the toggle switch.
+4. Click the **Load unpacked** button in the top-left corner.
+5. Select the repository root folder.
+6. **Launch Loki** by pressing <kbd>⌘</kbd><kbd>⇧</kbd><kbd>L</kbd> (Mac) or <kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>L</kbd> (Windows/Linux).
 
 > **Tip:** Pin Loki to your toolbar for quick access via the Extensions puzzle-piece icon.
+
+### Other Chromium Browsers
+Because Loki is built on standard Manifest V3 WebExtensions APIs, it is **100% compatible with other Chromium-based browsers**:
+- **Microsoft Edge**: Navigate to `edge://extensions/`, enable **Developer mode**, and click **Load unpacked**.
+- **Brave Browser**: Navigate to `brave://extensions/`, enable **Developer mode**, and click **Load unpacked**.
+- **Opera**: Navigate to `opera://extensions/`, enable **Developer mode**, and click **Load unpacked**.
+- **Arc / Vivaldi**: Open the Extensions settings page, enable developer options, and select the project folder via the load unpacked button.
 
 ---
 
@@ -184,11 +191,17 @@ No build step required — the extension runs directly from source.
 | **`file://` URLs** | Requires user opt-in: Extensions → Loki → "Allow access to file URLs" |
 | **Storage quota** | `chrome.storage.sync` has a 100 KB limit (~500 hotkeys at ~200 bytes each) |
 
+## 🔒 Privacy Policy
+
+Loki does not collect, transmit, or share any personal data. All data operations (including reading your bookmarks, saving options, and tracking active tabs) are handled strictly locally on your browser. 
+
+Read the full [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for more details.
+
 ---
 
 ## 📄 License
 
-[MIT](LICENSE)
+This project is open-source and available under the [MIT License](LICENSE).
 
 ---
 
