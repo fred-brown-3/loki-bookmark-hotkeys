@@ -13,3 +13,7 @@ Thumbs.db
 
 # Agents / AI
 .agents/
+
+# Temporary / Publisher Files
+STORE_LISTING.md
+loki-bookmark-hotkeys.zip
