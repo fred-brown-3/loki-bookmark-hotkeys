@@ -23,8 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="screenshots/search_mode.png" width="45%" alt="Fuzzy Search Mode" />
-  <img src="screenshots/options_page.png" width="45%" alt="Options Dashboard" />
+  <img src="screenshots/options_page.png" width="600" alt="Options Dashboard" />
 </p>
 
 ---
