@@ -18,11 +18,13 @@
 
 ---
 
-<!-- 📸 Replace the path below with an actual screenshot of the palette popup -->
-<!-- Tip: Open the palette (Cmd+Shift+L) and take a screenshot (Cmd+Shift+4 on Mac) -->
-
 <p align="center">
   <img src="screenshots/palette.png" width="600" alt="Loki command palette in action" />
+</p>
+
+<p align="center">
+  <img src="screenshots/search_mode.png" width="45%" alt="Fuzzy Search Mode" />
+  <img src="screenshots/options_page.png" width="45%" alt="Options Dashboard" />
 </p>
 
 ---
